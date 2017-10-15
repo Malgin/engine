@@ -4,6 +4,7 @@ import Resources from 'engine/Resources';
 import Particle from 'engine/physics/particles/Particle';
 import ParticleForceRegistry from 'engine/physics/particles/ParticleForceRegistry';
 import GravityForceGenerator from 'engine/physics/particles/GravityForceGenerator';
+import ParticleContact from 'engine/physics/particles/ParticleContact';
 import { vec3, mat4 } from 'math';
 import utils from 'src/utils';
 import Mesh from 'engine/render/Mesh';
@@ -23,15 +24,26 @@ export default class ParticleScene extends BaseScene {
     this.gravityGenerator = new GravityForceGenerator(0, -10, 0);
     this.particleRegistry = new ParticleForceRegistry();
     this.particles = [];
+
+    this.contact = new ParticleContact();
+    this.contact.setup(null, null, 0.5, [0, 1, 0]);
   }
 
   render (dt, gl) {
     super.render(dt, gl);
 
-    this.particleRegistry.updateForces(dt);
     for (let i = 0; i < this.particles.length; i++) {
       let particle = this.particles[i];
+
       particle.integrate(dt);
+
+      this.particleRegistry.updateForces(dt);
+
+      if (particle.position[1] < 0) {
+        this.contact.particle1 = particle;
+        this.contact.penetration = -particle.position[1];
+        this.contact.resolve(dt);
+      }
 
       mat4.fromTranslation(helperMatrix, particle.position);
       this.renderer.renderMesh(this.particleMesh, this.whiteShader, helperMatrix);
@@ -52,7 +64,8 @@ export default class ParticleScene extends BaseScene {
 
     let particle = new Particle();
     particle.setPosition(helperVec);
-    this.particleRegistry.add(particle, this.gravityGenerator);
+    particle.setAcceleration(0, -10, 0);
+    // this.particleRegistry.add(particle, this.gravityGenerator);
     this.particles.push(particle);
   }
 

@@ -34,6 +34,10 @@ export default class Particle {
     this.mass = 1 / inverseMass;
   }
 
+  setAcceleration (x, y, z) {
+    vec3.set(this.acceleration, x, y, z);
+  }
+
   integrate (dt) {
     if (this.inverseMass <= 0) { // infinite mass
       return;
@@ -43,8 +47,7 @@ export default class Particle {
     vec3.scaleAndAdd(this.position, this.position, this.velocity, dt);
 
     // Acceleration
-    vec3.copy(resultingAcc, this.acceleration);
-    vec3.add(resultingAcc, resultingAcc, this.forceAccum);
+    vec3.add(resultingAcc, this.acceleration, this.forceAccum);
     vec3.scaleAndAdd(this.velocity, this.velocity, resultingAcc, dt);
 
     // Drag
