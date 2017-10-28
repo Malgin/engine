@@ -1,8 +1,12 @@
-import { mat3 } from 'math';
+import math from 'math';
+const { mat3 } = math;
+
+import MathAdditional from './lib/MathAdditional';
 import Shader from './render/Shader';
 import Renderer from './render/Renderer';
 import Mesh from './render/Mesh';
 import Input from './Input';
+import DebugDraw from './render/DebugDraw';
 
 export default class Application {
 
@@ -76,6 +80,8 @@ export default class Application {
   }
 
   onAnimationFrame () {
+    let gl = this.gl;
+
     let now = Date.now() / 1000; // seconds
     let lastTime = this.time || now;
     let dt = now - lastTime;
@@ -84,10 +90,23 @@ export default class Application {
 
     this.input.update();
 
-    this.gl.viewport(0, 0, this.width, this.height);
-    this.render(dt, this.gl);
+    gl.viewport(0, 0, this.width, this.height);
+    this.render(dt, gl);
+
+    // Debug render
+    if (this.debugDraw) {
+      this.debugDraw.render();
+    }
 
     window.requestAnimationFrame(this.renderFunc);
+  }
+
+  setupDebugDraw (shader) {
+    this.debugDraw = new DebugDraw({
+      shader: shader
+    });
+
+    return this.debugDraw;
   }
 
   render (dt, gl) {

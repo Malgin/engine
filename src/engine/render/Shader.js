@@ -2,6 +2,30 @@ import app from '../Application';
 
 const VERTEX_START = '[vertex]';
 const FRAGMENT_START = '[fragment]';
+const MAX_UNIFORMS = 20;
+const NO_UNIFORM = -2;
+
+const UNIFORM_LIGHT_DIR = 10;
+const UNIFORM_PROJECTION_MATRIX = 0;
+const UNIFORM_MODELVIEW_MATRIX = 1;
+const UNIFORM_NORMAL_MATRIX = 2;
+
+const ATTRIBUTE_POSITION = 0;
+const ATTRIBUTE_NORMAL = 1;
+const ATTRIBUTE_COLOR = 2;
+
+const UNIFORM_NAMES = {
+  [UNIFORM_LIGHT_DIR]: 'uLightDir',
+  [UNIFORM_PROJECTION_MATRIX]: 'uPMatrix',
+  [UNIFORM_MODELVIEW_MATRIX]: 'uMVMatrix',
+  [UNIFORM_NORMAL_MATRIX]: 'uNormalMatrix',
+}
+
+const ATTRIBUTE_NAMES = {
+  [ATTRIBUTE_POSITION]: 'aPosition',
+  [ATTRIBUTE_NORMAL]: 'aNormal',
+  [ATTRIBUTE_COLOR]: 'aColor'
+};
 
 export default class Shader {
 
@@ -13,10 +37,11 @@ export default class Shader {
       [gl.FRAGMENT_SHADER]: 'fragment'
     };
 
+    this.uniformLocations = new Array(MAX_UNIFORMS);
+    this.uniformLocations.fill(NO_UNIFORM);
     this.program = null;
     this.loaded = false;
     this.attribLocations = {};
-    this.uniformLocations = {};
   }
 
   load (dataString) {
@@ -80,6 +105,13 @@ export default class Shader {
     return shader;
   }
 
+  bindAttribLocations (program) {
+    let gl = this.gl;
+    for (let attribID in ATTRIBUTE_NAMES) {
+      gl.bindAttribLocation(program, parseInt(attribID), ATTRIBUTE_NAMES[attribID]);
+    }
+  }
+
   use () {
     let gl = this.gl;
     gl.useProgram(this.program);
@@ -96,6 +128,7 @@ export default class Shader {
     }
 
     this.program = gl.createProgram();
+    this.bindAttribLocations(this.program);
     gl.attachShader(this.program, vertexCompiled);
     gl.attachShader(this.program, fragmentCompiled);
     gl.linkProgram(this.program);
@@ -126,17 +159,16 @@ export default class Shader {
     return result;
   }
 
-  getUniformLocation (name) {
+  getUniformLocation (id) {
     let gl = this.gl;
 
-    let result = this.uniformLocations[name];
+    let result = this.uniformLocations[id];
 
-    if (!result) {
-      result = gl.getUniformLocation(this.program, name);
-      if (result !== -1) {
-        this.uniformLocations[name] = result;
-      } else {
-        console.error(`Can't get shader uniform: ${name}`);
+    if (result === NO_UNIFORM) {
+      result = gl.getUniformLocation(this.program, UNIFORM_NAMES[id]);
+      this.uniformLocations[id] = result;
+      if (result === -1) {
+        console.error(`Can't get shader uniform: ${UNIFORM_NAMES[id]}`);
       }
     }
 
@@ -154,4 +186,35 @@ export default class Shader {
     gl.uniformMatrix4fv(location, false, value);
   }
 
+  setUniform3 (name, value) {
+    let gl = this.gl;
+
+    let location = this.getUniformLocation(name);
+    if (location === -1) {
+      return;
+    }
+
+    gl.uniform3fv(location, value);
+  }
+
+  setUniform4 (name, value) {
+    let gl = this.gl;
+
+    let location = this.getUniformLocation(name);
+    if (location === -1) {
+      return;
+    }
+
+    gl.uniform4fv(location, value);
+  }
+
 }
+
+Shader.UNIFORM_LIGHT_DIR = UNIFORM_LIGHT_DIR;
+Shader.UNIFORM_PROJECTION_MATRIX = UNIFORM_PROJECTION_MATRIX;
+Shader.UNIFORM_MODELVIEW_MATRIX = UNIFORM_MODELVIEW_MATRIX;
+Shader.UNIFORM_NORMAL_MATRIX = UNIFORM_NORMAL_MATRIX;
+
+Shader.ATTRIBUTE_POSITION = ATTRIBUTE_POSITION;
+Shader.ATTRIBUTE_NORMAL = ATTRIBUTE_NORMAL;
+Shader.ATTRIBUTE_COLOR = ATTRIBUTE_COLOR;

@@ -1,4 +1,5 @@
-import { vec2 } from 'math';
+import math from 'math';
+const { vec2 } = math;
 
 export default class Input {
 

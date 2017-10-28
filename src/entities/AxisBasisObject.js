@@ -1,5 +1,7 @@
 import Mesh from 'engine/render/Mesh';
-import { mat4 } from 'math';
+import math from 'math';
+const { mat4 } = math;
+
 import app from 'engine/Application';
 import Resources from 'engine/Resources';
 

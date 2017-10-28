@@ -5,7 +5,8 @@ import Particle from 'engine/physics/particles/Particle';
 import ParticleForceRegistry from 'engine/physics/particles/ParticleForceRegistry';
 import GravityForceGenerator from 'engine/physics/particles/GravityForceGenerator';
 import ParticleContact from 'engine/physics/particles/ParticleContact';
-import { vec3, mat4 } from 'math';
+import math from 'math';
+const { mat4, vec3 } = math;
 import utils from 'src/utils';
 import Mesh from 'engine/render/Mesh';
 

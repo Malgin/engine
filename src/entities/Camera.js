@@ -1,5 +1,6 @@
 import app from 'src/engine/Application';
-import { mat4, vec3 } from 'math';
+import math from 'math';
+const { mat4, vec3 } = math;
 
 const UP_DIRECTION = vec3.fromValues(0, 1, 0);
 const RIGHT_DIRECTION = vec3.fromValues(1, 0, 0);
@@ -9,6 +10,7 @@ export default class Camera {
   constructor () {
     this.projectionMatrix = mat4.create();
     this.matrix = mat4.create();
+    this.normalMatrix = mat4.create();
     this.outMatrix = mat4.create();
 
     this.position = vec3.create();

@@ -1,5 +1,6 @@
 import ParticleForceGenerator from './ParticleForceGenerator';
-import { vec3 } from 'math';
+import math from 'math';
+const { vec3 } = math;
 
 let helperVec = vec3.create();
 

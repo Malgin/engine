@@ -1,4 +1,5 @@
-import { vec3 } from 'math';
+import math from 'math';
+const { vec3 } = math;
 const { pow } = Math;
 
 let resultingAcc = vec3.create(); // Helper object

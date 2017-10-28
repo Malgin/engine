@@ -1,7 +1,5 @@
 import app from 'src/engine/Application';
 import Resources from 'engine/Resources';
-import whiteShader from 'resources/shaders/white.shader';
-import vertexColorShader from 'resources/shaders/vertexColor.shader';
 import AxisBasisObject from './entities/AxisBasisObject';
 import GridEntity from './entities/GridEntity';
 import Camera from './entities/Camera';
@@ -9,16 +7,22 @@ import Input from 'engine/Input';
 import utils from 'src/utils';
 import Mesh from 'engine/render/Mesh';
 
-import { mat4, vec3 } from 'math';
+import math from 'math';
+let { mat4, vec3 } = math;
 
 export default class BaseScene {
 
   constructor () {
     this.renderer = app.instance.renderer;
+
+    let shader = Resources.getShader('vertexColorShader');
+    this.debugDraw = app.instance.setupDebugDraw(shader);
+
     this.initEntities();
   }
 
   initEntities () {
+
     this.axisBasis = new AxisBasisObject();
     this.grid = new GridEntity({
       cols: 12,
@@ -31,8 +35,8 @@ export default class BaseScene {
   }
 
   reset () {
-    this.camera.setPosition(0, 5, 12);
-    this.camera.rotate(0, -Math.PI / 7);
+    this.camera.setPosition(0, 3, 6);
+    this.camera.rotate(0, -Math.PI / 10);
     vec3.set(this.cameraMoveVector, 0, 0, 0);
   }
 
@@ -41,10 +45,13 @@ export default class BaseScene {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
 
     this.handleInput(dt);
 
     this.camera.recalculate();
+    this.renderer.prepare();
     this.renderer.setMatrices(this.camera.worldMatrix, this.camera.projectionMatrix);
 
     gl.depthMask(false);

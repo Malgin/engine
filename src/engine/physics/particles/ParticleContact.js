@@ -1,4 +1,5 @@
-import { vec3 } from 'math';
+import math from 'math';
+const { vec3 } = math;
 
 let helperVec = vec3.create();
 let impulsePerInvMass = vec3.create();
@@ -71,7 +72,6 @@ export default class ParticleContact {
     if (totalInvMass <= 0) {
       return;
     }
-
 
     // Total impulse
     let impulse = deltaSpeed / totalInvMass; // same as deltaSpeed * (p1.mass + p2.mass)

@@ -2,7 +2,9 @@ import Application from 'src/engine/Application';
 import Resources from 'engine/Resources';
 import whiteShader from 'resources/shaders/white.shader';
 import vertexColorShader from 'resources/shaders/vertexColor.shader';
+import directionalLightingShader from 'resources/shaders/directionalLighting.shader';
 import ParticleScene from './scenes/ParticleScene';
+import RigidbodyScene from './scenes/RigidbodyScene';
 
 export default class Game extends Application {
 
@@ -16,11 +18,12 @@ export default class Game extends Application {
   loadResources () {
     Resources.addShader('whiteShader', whiteShader);
     Resources.addShader('vertexColorShader', vertexColorShader);
+    Resources.addShader('directionalLightingShader', directionalLightingShader);
   }
 
   initEntities () {
     this.scenes = [
-      new ParticleScene()
+      new RigidbodyScene()
     ];
 
     this.setScene(0);

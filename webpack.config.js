@@ -4,7 +4,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
-  devtool: 'inline-cheap-source-map',
+  devtool: 'eval',
   devServer: {
     contentBase: './dist',
     port: 9000
