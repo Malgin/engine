@@ -1,3 +1,5 @@
+import { CollisionSphere, CollisionBox } from './Primitive';
+
 import math from 'math';
 const { vec3, mat4, mat3, quat } = math;
 
@@ -34,6 +36,22 @@ export default class RigidBody {
 
     this.isAwake = true;
     this.isFiniteMass = true;
+
+    this.shape = null;
+  }
+
+  //------------------------------------------------------------------------
+  // Geometry
+  //------------------------------------------------------------------------
+
+  setSphere (radius) {
+    this.shape = new CollisionSphere();
+    this.shape.setup(radius, this);
+  }
+
+  setBox (size) {
+    this.shape = new CollisionBox();
+    this.shape.setup(size, this);
   }
 
   //------------------------------------------------------------------------
@@ -142,6 +160,9 @@ export default class RigidBody {
     quat.normalize(this.orientation, this.orientation);
     this.calculateTransformMatrix();
     this.transformInertiaTensor();
+    if (this.shape) {
+      this.shape.claculateInternals();
+    }
   }
 
   calculateTransformMatrix () {

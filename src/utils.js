@@ -8,7 +8,7 @@ let utils = {
     let currentIndex = 0;
 
     for (let j = 0; j < parallelCount; j++) {
-      let parallel = 2 * PI * (j+1) / parallelCount;
+      let parallel = PI * j / (parallelCount - 1);
 
       for (let i = 0; i < meridianCount; i++) {
         let meridian = 2.0 * PI * i / meridianCount;
@@ -21,9 +21,10 @@ let utils = {
         indices.push(j * parallelCount + i);
         indices.push(((j + 1) % parallelCount) * parallelCount + i);
         indices.push(((j + 1) % parallelCount) * parallelCount + (i + 1) % meridianCount);
+
         indices.push(((j + 1) % parallelCount) * parallelCount + (i + 1) % meridianCount);
-        indices.push(((j + 1) % parallelCount) * parallelCount + i);
-        indices.push(j * parallelCount + (i + 1) % meridianCount);
+        indices.push(((j) % parallelCount) * parallelCount + (i + 1) % meridianCount);
+        indices.push(j * parallelCount + i);
       }
     }
 

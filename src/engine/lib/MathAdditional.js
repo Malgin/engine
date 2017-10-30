@@ -47,24 +47,37 @@ quat.addScaledRotaton = function (out, a, v, scale) {
 
 vec3.transformMat4Direction = function (out, a, m) {
   let x = a[0], y = a[1], z = a[2];
+  out[0] = x * m[0] + y * m[4] + z * m[8];
+  out[1] = x * m[1] + y * m[5] + z * m[9];
+  out[2] = x * m[2] + y * m[6] + z * m[10];
+  return out;
+}
+
+vec3.transformInvertMat4 = function (out, a, m) {
+  let x = a[0] - m[12], y = a[1] - m[13], z = a[2] - m[14];
   out[0] = x * m[0] + y * m[1] + z * m[2];
   out[1] = x * m[4] + y * m[5] + z * m[6];
   out[2] = x * m[8] + y * m[9] + z * m[10];
   return out;
 }
 
-vec3.transformInvertMat4 = function (out, a, m) {
-  let x = a[0] - m[3], y = a[1] - m[7], z = a[2] - m[11];
-  out[0] = x * m[0] + y * m[4] + z * m[8];
-  out[1] = x * m[1] + y * m[5] + z * m[9];
-  out[2] = x * m[2] + y * m[6] + z * m[10];
+vec3.transformInvertMat4Direction = function (out, a, m) {
+  let x = a[0], y = a[1], z = a[2];
+  out[0] = x * m[0] + y * m[1] + z * m[2];
+  out[1] = x * m[4] + y * m[5] + z * m[6];
+  out[2] = x * m[8] + y * m[9] + z * m[10];
   return out;
 }
 
-vec3.transformInvertMat4Direction = function (out, a, m) {
-  let x = a[0], y = a[1], z = a[2];
-  out[0] = x * m[0] + y * m[4] + z * m[8];
-  out[1] = x * m[1] + y * m[5] + z * m[9];
-  out[2] = x * m[2] + y * m[6] + z * m[10];
-  return out;
+// 3 for position
+mat4.getAxis = function (out, m, axis) {
+  out[0] = m[axis * 4];
+  out[1] = m[axis * 4 + 1];
+  out[2] = m[axis * 4 + 2];
+}
+
+mat3.getAxis = function (out, m, axis) {
+  out[0] = m[axis * 3];
+  out[1] = m[axis * 3 + 1];
+  out[2] = m[axis * 3 + 2];
 }
