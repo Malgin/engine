@@ -34,12 +34,13 @@ export default class Renderer {
   }
 
   renderMesh (mesh, shader, transform, renderOpts) {
-    if (!mesh.vertexBuffer) {
+    if (!mesh.hasVertices) {
       console.error('Mesh data incomplete');
       return;
     }
 
     let indexCount = mesh.faceCount * mesh.componentCount;
+    let stride = mesh.strideBytes;
     if (!indexCount) {
       return; // Empty mesh
     }
@@ -67,31 +68,32 @@ export default class Renderer {
     shader.setUniformMat4(UNIFORM_PROJECTION_MATRIX, this.projectionMatrix);
     shader.setUniformMat4(UNIFORM_MODELVIEW_MATRIX, modelViewMatrix);
 
-    // Vertices
-    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
-    gl.enableVertexAttribArray(ATTRIBUTE_POSITION);
-    gl.vertexAttribPointer(ATTRIBUTE_POSITION, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
 
-    if (mesh.normalBuffer) {
+    if (mesh.hasVertices) {
+      // Vertices
+      gl.enableVertexAttribArray(ATTRIBUTE_POSITION);
+      gl.vertexAttribPointer(ATTRIBUTE_POSITION, 3, gl.FLOAT, false, stride, mesh.vertexOffsetBytes);
+    }
+
+    if (mesh.hasNormals) {
       // Set normal matrix and light dir
       shader.setUniformMat4(UNIFORM_NORMAL_MATRIX, normalMatrix);
       shader.setUniform3(UNIFORM_LIGHT_DIR, this.lightDir);
 
       // Normals
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
       gl.enableVertexAttribArray(ATTRIBUTE_NORMAL);
-      gl.vertexAttribPointer(ATTRIBUTE_NORMAL, 3, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(ATTRIBUTE_NORMAL, 3, gl.FLOAT, false, stride, mesh.normalOffsetBytes);
     }
 
-    // Vertices
-    if (mesh.colorBuffer) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.colorBuffer);
+    // Colors
+    if (mesh.hasColors) {
       gl.enableVertexAttribArray(ATTRIBUTE_COLOR);
-      gl.vertexAttribPointer(ATTRIBUTE_COLOR, 4, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(ATTRIBUTE_COLOR, 4, gl.FLOAT, false, stride, mesh.colorOffsetBytes);
     }
 
     // Draw
-    if (mesh.indexBuffer) {
+    if (mesh.hasIndices) {
       // Indices
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
       gl.drawElements(renderMode, indexCount, gl.UNSIGNED_SHORT, 0);

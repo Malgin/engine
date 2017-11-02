@@ -63,6 +63,7 @@ export default class GridEntity {
 
     this.mesh.setVertices(vertices);
     this.mesh.setIndices(indices);
+    this.mesh.createBuffer();
   }
 
   render () {

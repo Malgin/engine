@@ -36,10 +36,12 @@ export default class RigidbodyScene extends BaseScene {
     this.sphereMesh = new Mesh();
     utils.generateSphere(this.sphereMesh, 30, 30, 0.5);
     this.sphereMesh.calculateNormals();
+    this.sphereMesh.createBuffer();
 
     this.boxMesh = new Mesh();
     utils.generateBox(this.boxMesh, 1, 1, 1);
     this.boxMesh.calculateNormals();
+    this.boxMesh.createBuffer();
 
     this.collisionData = new CollisionData(256);
 
@@ -125,6 +127,7 @@ export default class RigidbodyScene extends BaseScene {
     let type1 = shape1.type;
     let type2 = shape2.type;
 
+
     if (type1 === CollisionPrimitive.SPHERE && type2 === CollisionPrimitive.SPHERE) {
       CollisionDetector.sphereVsSphere(shape1, shape2, collisionData);
     } else if (type1 === CollisionPrimitive.SPHERE && type2 === CollisionPrimitive.PLANE) {
@@ -133,7 +136,10 @@ export default class RigidbodyScene extends BaseScene {
       CollisionDetector.sphereVsBox(shape1, shape2, collisionData);
     } else if (type1 === CollisionPrimitive.BOX && type2 === CollisionPrimitive.PLANE) {
       CollisionDetector.boxVsHalfSpace(shape1, shape2, collisionData);
+    } else if (type1 === CollisionPrimitive.BOX && type2 === CollisionPrimitive.BOX) {
+      CollisionDetector.boxVsBox(shape1, shape2, collisionData);
     }
+
   }
 
   addBody (x, y, z) {

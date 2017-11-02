@@ -5,7 +5,7 @@ const { mat4 } = math;
 import app from 'engine/Application';
 import Resources from 'engine/Resources';
 
-let shaderMesh = null;
+let sharedMesh = null;
 
 export default class AxisBasisObject {
 
@@ -15,9 +15,9 @@ export default class AxisBasisObject {
 
     this.transform = mat4.create();
 
-    if (!shaderMesh) {
-      shaderMesh = new Mesh();
-      shaderMesh.setVertices([
+    if (!sharedMesh) {
+      sharedMesh = new Mesh();
+      sharedMesh.setVertices([
         0, 0, 0,
         1, 0, 0,
         0, 0, 0,
@@ -26,7 +26,7 @@ export default class AxisBasisObject {
         0, 0, 1
       ]);
 
-      shaderMesh.setColors([
+      sharedMesh.setColors([
         1, 0, 0, 1,
         1, 0, 0, 1,
         0, 1, 0, 1,
@@ -35,12 +35,14 @@ export default class AxisBasisObject {
         0, 0, 1, 1
       ]);
 
-      shaderMesh.setIndices([
+      sharedMesh.setIndices([
         0, 1, 2, 3, 4, 5
       ]);
+
+      sharedMesh.createBuffer();
     }
 
-    this.mesh = shaderMesh;
+    this.mesh = sharedMesh;
 
     this.renderOpts = {
       renderMode: gl.LINES
