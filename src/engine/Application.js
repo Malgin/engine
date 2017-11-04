@@ -7,6 +7,7 @@ import Renderer from './render/Renderer';
 import Mesh from './render/Mesh';
 import Input from './Input';
 import DebugDraw from './render/DebugDraw';
+import Scene from './scene/Scene';
 
 export default class Application {
 
@@ -29,9 +30,13 @@ export default class Application {
     this.input = new Input();
 
     if (this.gl) {
-
       Application.gl = this.gl;
-      this.renderer = new Renderer(this.gl);
+      this.scene = new Scene();
+      this.renderer = new Renderer({
+        gl: this.gl,
+        scene: this.scene
+      });
+
       this.startRenderLoop();
     }
   }
@@ -91,7 +96,9 @@ export default class Application {
     this.input.update();
 
     gl.viewport(0, 0, this.width, this.height);
+    this.scene.update(dt);
     this.render(dt, gl);
+    this.renderer.render();
 
     // Debug render
     if (this.debugDraw) {

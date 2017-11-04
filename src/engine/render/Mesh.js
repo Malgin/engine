@@ -174,6 +174,10 @@ export default class Mesh {
   }
 
   calculateNormals () {
+    if (!this.vertices || !this.vertices.length) {
+      return;
+    }
+
     let gl = this.gl;
     let normals = new Array(this.vertices.length);
     for (let i = 0; i < normals.length; i++) {

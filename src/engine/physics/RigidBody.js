@@ -170,6 +170,7 @@ export default class RigidBody {
   }
 
   transformInertiaTensor () {
+    // return;
     // TODO: try to replace this with high level functions calls (to understand the process)
     let iitBody = this.inverseInertiaTensor;
     let iitWorld = this.inverseInertiaTensorWorld;

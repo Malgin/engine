@@ -55,13 +55,14 @@ export default class RigidbodyScene extends BaseScene {
     this.body.angularDamping = 0.2;
     this.body.linearDamping = 0.2;
     // this.body.setSphere(0.5);
-    this.body.setBox([0.1, 4, 2]);
+    this.body.setBox([1, 1, 1]);
 
     this.collisionBody = this.addBody(1, 2, 3);
     this.collisionBody.acceleration[1] = 0;
     this.collisionBody.angularDamping = 0.2;
     this.collisionBody.linearDamping = 0.2;
-    this.collisionBody.setSphere(0.5);
+    this.collisionBody.setBox([1, 1, 1]);
+    // this.collisionBody.setSphere(0.5);
 
 
     // this.spring = new Spring([0, 3, 3], [0.0, 0.4, 0.4], null, 20, 1);

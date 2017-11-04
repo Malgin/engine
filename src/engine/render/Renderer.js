@@ -1,5 +1,7 @@
 import Shader from './Shader';
 import math from 'math';
+import enginePool from '../enginePool';
+
 const { mat4, vec3 } = math;
 
 let identityMatrix = mat4.create();
@@ -17,15 +19,53 @@ const ATTRIBUTE_COLOR = Shader.ATTRIBUTE_COLOR;
 
 export default class Renderer {
 
-  constructor (gl) {
-    this.gl = gl;
+  constructor (opts = {}) {
+    this.gl = opts.gl;
+    this.scene = opts.scene;
+
     this.worldMatrix = mat4.create();
     this.projectionMatrix = mat4.create();
     this.lightDir = vec3.fromValues(1, -4, -3);
+    this.renderOps = [];
   }
 
-  prepare () {
+  render () {
+    // Free render operations
+    let renderOps = this.renderOps;
+    for (let i = 0, len = renderOps.length; i < len; i++) {
+      enginePool.releaseRenderOp(renderOps[i]);
+    }
+    this.renderOps.length = 0;
 
+    // Get new render operations from the scene
+    if (this.scene) {
+      this.scene.setupRenderOps(this);
+    }
+
+    this.sortRenderOps();
+    this.processRenderOps();
+  }
+
+  addRenderOp () {
+    let renderOp = enginePool.obtainRenderOp();
+    this.renderOps.push(renderOp);
+    return renderOp;
+  }
+
+  sortRenderOps () {
+
+  }
+
+  applyState (renderOp) {
+
+  }
+
+  processRenderOps () {
+    let renderOps = this.renderOps;
+    for (let i = 0, len = renderOps.length; i < len; i++) {
+      let renderOp = renderOps[i];
+      this.renderMesh(renderOp.mesh, renderOp.material.shader, renderOp.transform, renderOp);
+    }
   }
 
   setMatrices (world, projection) {

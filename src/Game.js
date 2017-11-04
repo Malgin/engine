@@ -5,6 +5,7 @@ import vertexColorShader from 'resources/shaders/vertexColor.shader';
 import directionalLightingShader from 'resources/shaders/directionalLighting.shader';
 import ParticleScene from './scenes/ParticleScene';
 import RigidbodyScene from './scenes/RigidbodyScene';
+import GameObjectScene from './scenes/GameObjectScene';
 
 export default class Game extends Application {
 
@@ -23,7 +24,7 @@ export default class Game extends Application {
 
   initEntities () {
     this.scenes = [
-      new RigidbodyScene()
+      new GameObjectScene()
     ];
 
     this.setScene(0);

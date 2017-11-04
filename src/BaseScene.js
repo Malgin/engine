@@ -51,7 +51,6 @@ export default class BaseScene {
     this.handleInput(dt);
 
     this.camera.recalculate();
-    this.renderer.prepare();
     this.renderer.setMatrices(this.camera.worldMatrix, this.camera.projectionMatrix);
 
     gl.depthMask(false);
