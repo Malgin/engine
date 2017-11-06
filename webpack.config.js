@@ -27,6 +27,10 @@ module.exports = {
       {
         test: /\.shader$/,
         use: 'raw-loader'
+      },
+      {
+        test: /\.bin$/,
+        use: 'file-loader?name=/resources/[name].[ext]'
       }
     ]
   },

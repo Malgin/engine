@@ -5,6 +5,16 @@ class Resources {
 
   constructor () {
     this.shaders = {};
+    this.geometry = {};
+    this.hierarchy = {};
+  }
+
+  addGeometry (name, data) {
+
+  }
+
+  addHierarchy (name, data) {
+
   }
 
   addShader (name, src) {
