@@ -10,7 +10,7 @@ varying vec3 vNormal;
 
 void main(void) {
   gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
-  vNormal = vec3(uNormalMatrix * vec4(aNormal, 1.0));
+  vNormal = normalize(vec3(uNormalMatrix * vec4(aNormal, 1.0)));
 }
 
 [fragment]

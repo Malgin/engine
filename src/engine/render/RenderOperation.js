@@ -6,6 +6,8 @@ export default class RenderOperation {
 
   prepareForPool () {
     this.mesh = null;
+    this.shader = null;
+    this.lightEnabled = true;
     this.renderMode = undefined;
     this.renderMethod = 0; // 0 is renderMesh
     this.depthTest = true;

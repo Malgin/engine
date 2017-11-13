@@ -1,11 +1,32 @@
+import Resources from 'engine/Resources';
+import Mesh from 'engine/render/Mesh';
+
+const ATTRIB_POSITION = 'POSITION';
+const ATTRIB_NORMAL = 'NORMAL';
+const ATTRIB_TEXCOORD0 = 'TEXCOORD0';
+
+const ATTRIB_COUNT = {
+  [ATTRIB_POSITION]: 3,
+  [ATTRIB_NORMAL]: 3,
+  [ATTRIB_TEXCOORD0]: 2
+};
+
 export default class ModelLoader {
 
-  static load (dataView) {
+  static loadRequestResponse (request, opts) {
+    this.load(request.response, opts);
+  }
+
+  static load (buffer, opts) {
+    let dataView = new DataView(buffer);
 
     let offset = 0;
+
+    // File header byte length
     let len = dataView.getUint16(0);
-    console.info('len', len);
     offset += 2;
+
+    // Getting JSON file header
     let stringArr = new Uint8Array(len);
 
     for (let i = 0; i < len; i++) {
@@ -13,7 +34,81 @@ export default class ModelLoader {
     }
     offset += len;
     var encodedString = String.fromCharCode.apply(null, stringArr);
-    console.info('JSON:', encodedString);
+    let modelData = JSON.parse(encodedString);
+    console.info('JSON:', modelData);
+
+    // Hierarchy
+    if (modelData.hierarchy) {
+      modelData.hierarchy.url = opts.url;
+      Resources.addHierarchy(opts.url, modelData.hierarchy);
+    }
+
+    // Geometry
+    if (modelData.geometry) {
+      offset += this.loadGeometry(modelData.geometry, dataView, offset, opts);
+    }
+  }
+
+  static loadGeometry (geometry, dataView, offset, opts) {
+    let bytesRead = 0;
+
+    for (let i = 0; i < geometry.length; i++) {
+      let mesh = new Mesh();
+      let geomData = geometry[i];
+      let { indexCount, vertexCount, attributes, name } = geomData;
+
+      let indices = [];
+      for (let j = 0; j < indexCount; j++) {
+        indices.push(dataView.getUint16(offset + bytesRead));
+        bytesRead += 2;
+      }
+      mesh.setIndices(indices);
+
+      for (let k = 0; k < attributes.length; k++) {
+        let attribName = attributes[k];
+        let count = ATTRIB_COUNT[attribName];
+        if (!count) {
+          throw new Error('Attrib not supported:', attribName, opts);
+        }
+
+        let attribArray = [];
+        let totalCount = count * vertexCount;
+
+        bytesRead += this.readFloatArray(attribArray, totalCount, dataView, offset + bytesRead);
+
+        switch (attribName) {
+          case ATTRIB_POSITION:
+            mesh.setVertices(attribArray);
+            break;
+          case ATTRIB_NORMAL:
+            mesh.setNormals(attribArray);
+            break;
+          case ATTRIB_TEXCOORD0:
+            mesh.setTexCoord0(attribArray);
+            break;
+        }
+      }
+
+      if (!mesh.hasNormals) {
+        mesh.calculateNormals();
+      }
+
+      mesh.createBuffer();
+      Resources.addMesh(`${opts.url}:${name}`, mesh);
+    }
+
+    return bytesRead;
+  }
+
+  static readFloatArray (result, count, dataView, offset) {
+    let bytesRead = 0;
+
+    for (let i = 0; i < count; i++) {
+      result.push(dataView.getFloat32(offset + bytesRead));
+      bytesRead += 4;
+    }
+
+    return bytesRead;
   }
 
 }

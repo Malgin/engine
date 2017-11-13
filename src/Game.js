@@ -2,47 +2,35 @@ import Application from 'src/engine/Application';
 import Resources from 'engine/Resources';
 import ModelLoader from 'engine/loader/ModelLoader';
 
-import whiteShader from 'resources/shaders/white.shader';
-import vertexColorShader from 'resources/shaders/vertexColor.shader';
-import directionalLightingShader from 'resources/shaders/directionalLighting.shader';
-import pyramidModel from 'resources/models/pyramid.bin';
-
 import ParticleScene from './scenes/ParticleScene';
 import RigidbodyScene from './scenes/RigidbodyScene';
 import GameObjectScene from './scenes/GameObjectScene';
-
 
 export default class Game extends Application {
 
   constructor (data) {
     super(data);
 
-    this.loadResources();
-    this.initEntities();
+    this.loadResources()
+      .then(() => this.initEntities())
+      .catch((e) => { throw e });
   }
 
   loadResources () {
-    Resources.addShader('whiteShader', whiteShader);
-    Resources.addShader('vertexColorShader', vertexColorShader);
-    Resources.addShader('directionalLightingShader', directionalLightingShader);
+    return this.loadModels()
+             .then(() => this.loadTextures());
+  }
 
-    // ModelLoader.load(new DataView(new Uint8Array(pyramidModel)));
+  loadModels () {
+    return Resources.loadFileList([
+      // 'resources/models/group.mdl',
+      'resources/models/textureTest/textured_cube.mdl',
+      'resources/models/textureTest/textured_plane.mdl'
+    ], ModelLoader);
+  }
 
-    var oReq = new XMLHttpRequest();
-    oReq.open("GET", pyramidModel, true);
-    oReq.responseType = "arraybuffer";
-
-    oReq.onload = function (oEvent) {
-      var arrayBuffer = oReq.response; // Note: not oReq.responseText
-      if (arrayBuffer) {
-        ModelLoader.load(new DataView(arrayBuffer));
-      }
-    };
-
-    oReq.send(null);
-
-    // console.info('PYRAMID', typeof(pyramidModel));
-    // console.info(pyramidModel);
+  loadTextures () {
+    return Resources.loadObjectTextures();
   }
 
   initEntities () {
@@ -59,6 +47,8 @@ export default class Game extends Application {
   }
 
   render (dt, gl) {
+    if (!this.scenes) return;
+
     this.scenes[this.currentScene].render(dt, gl);
 
     let error = gl.getError();

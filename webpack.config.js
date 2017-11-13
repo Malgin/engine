@@ -1,12 +1,13 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
   devtool: 'eval',
   devServer: {
-    contentBase: './dist',
+    contentBase: path.join(__dirname, 'src'),
     port: 9000
   },
   module: {
@@ -29,7 +30,7 @@ module.exports = {
         use: 'raw-loader'
       },
       {
-        test: /\.bin$/,
+        test: /\.mdl$/,
         use: 'file-loader?name=/resources/[name].[ext]'
       }
     ]
@@ -44,7 +45,15 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({title: 'Output Management'}),
-    new CleanWebpackPlugin(['dist']),
+    // new CleanWebpackPlugin(['dist']),
+    new CopyWebpackPlugin([{
+        from: 'resources/**/*.mdl', // copy models into resources folder
+        to: '.'
+      }]),
+    new CopyWebpackPlugin([{
+      from: 'resources/**/*.jpg',
+      to: '.'
+    }])
   ],
   output: {
     filename: 'bundle.js',

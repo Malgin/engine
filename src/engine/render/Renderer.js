@@ -1,6 +1,7 @@
 import Shader from './Shader';
 import math from 'math';
 import enginePool from '../enginePool';
+import ShaderAssembler from './ShaderAssembler';
 
 const { mat4, vec3 } = math;
 
@@ -11,16 +12,21 @@ let normalMatrix = mat4.create();
 const UNIFORM_LIGHT_DIR = Shader.UNIFORM_LIGHT_DIR;
 const UNIFORM_PROJECTION_MATRIX = Shader.UNIFORM_PROJECTION_MATRIX;
 const UNIFORM_MODELVIEW_MATRIX = Shader.UNIFORM_MODELVIEW_MATRIX;
+const UNIFORM_TEXTURE0 = Shader.UNIFORM_TEXTURE0;
+const UNIFORM_TEXTURE1 = Shader.UNIFORM_TEXTURE1;
 const UNIFORM_NORMAL_MATRIX = Shader.UNIFORM_NORMAL_MATRIX;
 
 const ATTRIBUTE_POSITION = Shader.ATTRIBUTE_POSITION;
 const ATTRIBUTE_NORMAL = Shader.ATTRIBUTE_NORMAL;
+const ATTRIBUTE_TEXCOORD0 = Shader.ATTRIBUTE_TEXCOORD0;
+const ATTRIBUTE_TEXCOORD1 = Shader.ATTRIBUTE_TEXCOORD1;
 const ATTRIBUTE_COLOR = Shader.ATTRIBUTE_COLOR;
 
 export default class Renderer {
 
   constructor (opts = {}) {
     this.gl = opts.gl;
+    this.shaderAssembler = new ShaderAssembler();
     this.scene = opts.scene;
 
     this.worldMatrix = mat4.create();
@@ -42,8 +48,19 @@ export default class Renderer {
       this.scene.setupRenderOps(this);
     }
 
+    this.setupRenderOps();
     this.sortRenderOps();
     this.processRenderOps();
+  }
+
+  setupRenderOps () {
+    let renderOps = this.renderOps;
+    for (let i = 0, len = renderOps.length; i < len; i++) {
+      let renderOp = renderOps[i];
+      if (!renderOp.mesh) { continue; }
+      // Appropriate shader for the render operation
+      renderOp.shader = this.shaderAssembler.getShaderForROP(renderOp);
+    }
   }
 
   addRenderOp () {
@@ -64,7 +81,8 @@ export default class Renderer {
     let renderOps = this.renderOps;
     for (let i = 0, len = renderOps.length; i < len; i++) {
       let renderOp = renderOps[i];
-      this.renderMesh(renderOp.mesh, renderOp.material.shader, renderOp.transform, renderOp);
+      if (!renderOp.mesh) { continue; }
+      this.renderMesh(renderOp.mesh, renderOp.shader, renderOp.transform, renderOp);
     }
   }
 
@@ -87,6 +105,11 @@ export default class Renderer {
 
     let gl = this.gl;
 
+    let material = renderOpts && renderOpts.material;
+    let texture0 = material && material.texture0;
+    let texture1 = material && material.texture1;
+    let normalMap = material && material.normalMap;
+
     let renderMode = gl.TRIANGLES;
     if (renderOpts && renderOpts.renderMode !== undefined) {
       renderMode = renderOpts.renderMode;
@@ -108,12 +131,25 @@ export default class Renderer {
     shader.setUniformMat4(UNIFORM_PROJECTION_MATRIX, this.projectionMatrix);
     shader.setUniformMat4(UNIFORM_MODELVIEW_MATRIX, modelViewMatrix);
 
+    // Textures
+    if (texture0) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture0);
+      shader.setUniform1i(UNIFORM_TEXTURE0, 0);
+    }
+
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
 
+    // Vertices
     if (mesh.hasVertices) {
-      // Vertices
       gl.enableVertexAttribArray(ATTRIBUTE_POSITION);
       gl.vertexAttribPointer(ATTRIBUTE_POSITION, 3, gl.FLOAT, false, stride, mesh.vertexOffsetBytes);
+    }
+
+    // TexCoord0
+    if (mesh.hasTexCoord0) {
+      gl.enableVertexAttribArray(ATTRIBUTE_TEXCOORD0);
+      gl.vertexAttribPointer(ATTRIBUTE_TEXCOORD0, 2, gl.FLOAT, false, stride, mesh.texCoord0OffsetBytes);
     }
 
     if (mesh.hasNormals) {

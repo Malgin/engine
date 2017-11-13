@@ -7,16 +7,27 @@
 var util = require('util');
 var fs = require('fs');
 var xml2js = require('xml2js');
+var path = require('path');
+var math = require('./includes/math');
+var ColladaMaterial = require('./includes/collada-material');
+
+const MODEL_EXTENSION = '.mdl';
 
 var args = process.argv.splice(process.execArgv.length + 2);
 var dataFile = args[0];
 var data = fs.readFileSync(dataFile, 'utf8');
+var fileDir = path.dirname(dataFile);
+var fileExtension = path.extname(dataFile);
+var baseName = path.basename(dataFile, fileExtension);
+var targetFile = path.join(fileDir, baseName + MODEL_EXTENSION);
 
 const MODE_TRIANGLES = 'triangles;'
 
 class ColladaParser {
 
     constructor (data, opts = {}) {
+      this.fileDir = opts.directory;
+
       // Setup
       this.attributes = ['POSITION', 'NORMAL', 'TEXCOORD0', 'TEXCOORD1'];
       this.attribCount = { 'POSITION': 3, 'NORMAL': 3, 'TEXCOORD0': 2, 'TEXCOORD1': 2 };
@@ -28,10 +39,12 @@ class ColladaParser {
       this.includeGeometry = true;
       this.includeAnimation = true;
       this.includeHierarchy = true;
+      this.includeMaterial = true;
 
       if (opts.includeGeometry === false) this.includeGeometry = false;
       if (opts.includeAnimation === false) this.includeAnimation = false;
       if (opts.includeHierarchy === false) this.includeHierarchy = false;
+      if (opts.includeMaterial === false) this.includeMaterial = false;
       if (opts.includeNormals === false) this.includeAttribs['NORMAL'] = false;
       if (opts.includeUV === false) {
         this.includeAttribs['TEXCOORD0'] = false;
@@ -39,6 +52,8 @@ class ColladaParser {
       }
 
       this.root = data.COLLADA;
+      this.colladaMaterial = new ColladaMaterial(this.root, opts);
+
       this.materialsData = this.root.library_materials;
       this.geometriesData = this.root.library_geometries;
       this.visualScenesData = this.root.library_visual_scenes;
@@ -65,6 +80,22 @@ class ColladaParser {
 
     getCurrentScene () {
       return this.visualScenesData[0].visual_scene[0];
+    }
+
+    //------------------------------------------------------------------------
+    // Utils
+    //------------------------------------------------------------------------
+
+    getMatrix(data) {
+      let matrix = data.split(' ');
+
+      for (let i = 0; i < matrix.length; i++) {
+        matrix[i] = parseFloat(matrix[i]);
+      }
+
+      math.mat4transpose(matrix); // we need column major matrices
+
+      return matrix;
     }
 
     //------------------------------------------------------------------------
@@ -309,6 +340,10 @@ class ColladaParser {
       object.name = data.$.name;
       object.transform = this.getObjectTransform(data);
       object.geometry = this.getObjectGeometryID(data);
+      let materialID = this.getObjectMaterialID(data);
+      object.material = this.colladaMaterial.getMaterial(materialID);
+
+      console.log(util.inspect(object, false, null))
 
       let dataChildren = data.node;
       if (dataChildren) {
@@ -328,7 +363,7 @@ class ColladaParser {
         return null;
       }
 
-      return matrix[0]._;
+      return this.getMatrix(matrix[0]._);
     }
 
     getObjectGeometryID (data) {
@@ -340,12 +375,30 @@ class ColladaParser {
       return geometry[0].$.url.slice(1); // skip first # character
     }
 
+    getObjectMaterialID (data) {
+      let geometry = data.instance_geometry;
+      if (!geometry) {
+        return null;
+      }
+
+      let result = null;
+
+      try {
+        let instanceMaterial = geometry[0].bind_material[0].technique_common[0].instance_material[0];
+        result = instanceMaterial.$.target.slice(1);
+      } catch (e) {
+        // no material
+      }
+
+      return result;
+    }
+
     //------------------------------------------------------------------------
     // Writing data
     //------------------------------------------------------------------------
 
     writeData (outputFile) {
-      let writeStream = fs.createWriteStream('file.txt');
+      let writeStream = fs.createWriteStream(outputFile);
 
       let jsonData = {};
       let geometryData = [];
@@ -355,15 +408,26 @@ class ColladaParser {
         jsonData.geometry = [];
 
         for (let i = 0; i < this.geometryOrder.length; i++) {
+
           let geomID = this.geometryOrder[i];
           let geomName = geomID; // may be changed in future
           let geom = this.geometry[geomID];
           let targetData = geom.targetData;
 
+          let attribList = [];
+
+          for (let i = 0; i < this.attributes.length; i++) {
+            let attribName = this.attributes[i];
+            if (this.includeAttribs[attribName] && geom.geomData[attribName]) {
+              attribList.push(attribName);
+            }
+          }
+
           jsonData.geometry.push({
             name: geomName,
             indexCount: targetData.indexCount,
-            vertexCount: targetData.vertexCount
+            vertexCount: targetData.vertexCount,
+            attributes: attribList
           });
 
           let data = {
@@ -405,31 +469,24 @@ class ColladaParser {
     getTargetFloatArray (geom) {
       // Getting stride
       let stride = 0;
-      for (let i = 0; i < this.attributes.length; i++) {
-        let attrib = this.attributes[i];
-        if (this.includeAttribs[attrib] && geom.geomData[attrib]) {
-          stride += this.attribCount[attrib];
-        }
-      }
-
       let targetData = geom.targetData;
       let vertices = targetData.vertices;
-      let result = new Float32Array(vertices.length * stride);
+      let result = [];
 
-      for (let i = 0; i < vertices.length; i++) {
-        let currentStride = 0;
-        let vertex = vertices[i];
+      for (let n = 0; n < this.attributes.length; n++) {
+        let attrib = this.attributes[n];
 
-        for (let j = 0; j < this.attributes.length; j++) {
-          let attribName = this.attributes[j];
-          if (!this.includeAttribs[attribName] || !vertex[attribName]) continue;
+        if (!this.includeAttribs[attrib]) continue;
+        let count = this.attribCount[attrib];
 
-          let count = this.attribCount[attribName];
-          let currentIndex = i * stride + currentStride;
-          currentStride += count;
+        if (this.includeAttribs[attrib] && geom.geomData[attrib]) {
+          for (let i = 0; i < vertices.length; i++) {
+            let vertex = vertices[i];
+            if (!vertex[attrib]) break;
 
-          for (let k = 0; k < count; k++) {
-            result[currentIndex + k] = vertex[attribName][k];
+            for (let k = 0; k < count; k++) {
+              result.push(vertex[attrib][k]);
+            }
           }
         }
       }
@@ -452,7 +509,6 @@ class ColladaParser {
 
       return array.length * 2;
     }
-
   }
 
 let parser = new xml2js.Parser({
@@ -460,6 +516,8 @@ let parser = new xml2js.Parser({
 });
 
 parser.parseString(data, function (err, result) {
-  new ColladaParser(result).writeData();
+  new ColladaParser(result, {
+    directory: fileDir
+  }).writeData(targetFile);
 });
 

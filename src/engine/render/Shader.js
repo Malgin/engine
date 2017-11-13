@@ -9,21 +9,30 @@ const UNIFORM_LIGHT_DIR = 10;
 const UNIFORM_PROJECTION_MATRIX = 0;
 const UNIFORM_MODELVIEW_MATRIX = 1;
 const UNIFORM_NORMAL_MATRIX = 2;
+const UNIFORM_TEXTURE0 = 3;
+const UNIFORM_TEXTURE1 = 4;
 
 const ATTRIBUTE_POSITION = 0;
 const ATTRIBUTE_NORMAL = 1;
-const ATTRIBUTE_COLOR = 2;
+const ATTRIBUTE_TEXCOORD0 = 2;
+const ATTRIBUTE_TEXCOORD1 = 3;
+const ATTRIBUTE_COLOR = 4;
+
 
 const UNIFORM_NAMES = {
   [UNIFORM_LIGHT_DIR]: 'uLightDir',
   [UNIFORM_PROJECTION_MATRIX]: 'uPMatrix',
   [UNIFORM_MODELVIEW_MATRIX]: 'uMVMatrix',
   [UNIFORM_NORMAL_MATRIX]: 'uNormalMatrix',
-}
+  [UNIFORM_TEXTURE0]: 'uTexture0',
+  [UNIFORM_TEXTURE1]: 'uTexture1',
+};
 
 const ATTRIBUTE_NAMES = {
   [ATTRIBUTE_POSITION]: 'aPosition',
   [ATTRIBUTE_NORMAL]: 'aNormal',
+  [ATTRIBUTE_TEXCOORD0]: 'aTexCoord0',
+  [ATTRIBUTE_TEXCOORD1]: 'aTexCoord1',
   [ATTRIBUTE_COLOR]: 'aColor'
 };
 
@@ -38,7 +47,10 @@ export default class Shader {
     };
 
     this.uniformLocations = new Array(MAX_UNIFORMS);
-    this.uniformLocations.fill(NO_UNIFORM);
+    for (let i = 0; i < this.uniformLocations.length; i++) {
+      this.uniformLocations[i] = NO_UNIFORM;
+    }
+
     this.program = null;
     this.loaded = false;
     this.attribLocations = {};
@@ -175,6 +187,17 @@ export default class Shader {
     return result;
   }
 
+  setUniform1i (name, value) {
+    let gl = this.gl;
+
+    let location = this.getUniformLocation(name);
+    if (location === -1) {
+      return;
+    }
+
+    gl.uniform1i(location, false, value);
+  }
+
   setUniformMat4 (name, value) {
     let gl = this.gl;
 
@@ -214,7 +237,11 @@ Shader.UNIFORM_LIGHT_DIR = UNIFORM_LIGHT_DIR;
 Shader.UNIFORM_PROJECTION_MATRIX = UNIFORM_PROJECTION_MATRIX;
 Shader.UNIFORM_MODELVIEW_MATRIX = UNIFORM_MODELVIEW_MATRIX;
 Shader.UNIFORM_NORMAL_MATRIX = UNIFORM_NORMAL_MATRIX;
+Shader.UNIFORM_TEXTURE0 = UNIFORM_TEXTURE0;
+Shader.UNIFORM_TEXTURE1 = UNIFORM_TEXTURE1;
 
 Shader.ATTRIBUTE_POSITION = ATTRIBUTE_POSITION;
+Shader.ATTRIBUTE_TEXCOORD0 = ATTRIBUTE_TEXCOORD0;
+Shader.ATTRIBUTE_TEXCOORD1 = ATTRIBUTE_TEXCOORD1;
 Shader.ATTRIBUTE_NORMAL = ATTRIBUTE_NORMAL;
 Shader.ATTRIBUTE_COLOR = ATTRIBUTE_COLOR;

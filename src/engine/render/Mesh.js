@@ -106,6 +106,12 @@ export default class Mesh {
         bufferData[currentOffset + 2] = this.normals[i * 3 + 2];
       }
 
+      if (this.hasTexCoord0) {
+        currentOffset = offset + this.texCoord0Offset;
+        bufferData[currentOffset] = this.texCoord0[i * 2];
+        bufferData[currentOffset + 1] = this.texCoord0[i * 2 + 1];
+      }
+
       if (this.hasColors) {
         currentOffset = offset + this.colorOffset;
         bufferData[currentOffset] = this.colors[i * 4];
@@ -150,7 +156,6 @@ export default class Mesh {
   }
 
   setVertices (vertices) {
-    let gl = this.gl;
     this.vertices = vertices;
     this.hasVertices = vertices && !!vertices.length;
 
@@ -171,6 +176,16 @@ export default class Mesh {
   setColors (colors) {
     this.colors = colors;
     this.hasColors = colors && !!colors.length;
+  }
+
+  setTexCoord0 (texcoord) {
+    this.texCoord0 = texcoord;
+    this.hasTexCoord0 = texcoord && texcoord.length > 0;
+  }
+
+  setNormals (normals) {
+    this.normals = normals;
+    this.hasNormals = normals && !!normals.length;
   }
 
   calculateNormals () {

@@ -45,25 +45,42 @@ export default class GameObjectScene extends BaseScene {
     this.boxMesh.calculateNormals();
     this.boxMesh.createBuffer();
 
+    // this.boxObject = new GameObject();
+    // this.scene.addChild(this.boxObject);
+    // this.boxObject.loadHierarchy(
+    //   Resources.getHierarchy('resources/models/group.mdl'), {
+    //     material: this.directionalMaterial
+    //   }
+    // );
 
-    this.boxObject = new GameObject();
-    this.boxObject.mesh = this.boxMesh;
-    this.boxObject.material = this.directionalMaterial;
-    this.scene.addChild(this.boxObject);
+    this.object2 = new GameObject();
+    this.scene.addChild(this.object2);
+    this.object2.loadHierarchy(
+      Resources.getHierarchy('resources/models/textureTest/textured_cube.mdl')
+      // Resources.getHierarchy('resources/models/textureTest/textured_plane.mdl')
+    );
+    this.object2.position[1] = 3;
+    // this.object2.scale[0] = 0.01;
+    // this.object2.scale[1] = 0.01;
+    // this.object2.scale[2] = 0.01;
 
-    this.sphereObject = new GameObject();
-    this.sphereObject.mesh = this.sphereMesh;
-    this.sphereObject.material = this.directionalMaterial;
-    vec3.set(this.sphereObject.scale, 0.3, 0.3, 0.3);
-    vec3.set(this.sphereObject.position, 0, 1, 0);
-    this.boxObject.addChild(this.sphereObject);
+    // this.boxObject.mesh = Resources.meshes["pPyramid1-lib"];
+    // this.boxObject.material = this.directionalMaterial;
 
-    this.smallBoxObject = new GameObject();
-    this.smallBoxObject.mesh = this.boxMesh;
-    this.smallBoxObject.material = this.directionalMaterial;
-    vec3.set(this.smallBoxObject.scale, 0.5, 0.5, 0.5);
-    vec3.set(this.smallBoxObject.position, 2, 0, 0);
-    this.sphereObject.addChild(this.smallBoxObject);
+
+    // this.sphereObject = new GameObject();
+    // this.sphereObject.mesh = Resources.meshes['resources/models/girl.bin:polySurface3-lib'];
+    // this.sphereObject.material = this.directionalMaterial;
+    // vec3.set(this.sphereObject.scale, 0.3, 0.3, 0.3);
+    // vec3.set(this.sphereObject.position, 0, 1, 0);
+    // this.boxObject.addChild(this.sphereObject);
+
+    // this.smallBoxObject = new GameObject();
+    // this.smallBoxObject.mesh = this.boxMesh;
+    // this.smallBoxObject.material = this.directionalMaterial;
+    // vec3.set(this.smallBoxObject.scale, 0.5, 0.5, 0.5);
+    // vec3.set(this.smallBoxObject.position, 2, 0, 0);
+    // this.sphereObject.addChild(this.smallBoxObject);
   }
 
   setupMaterials () {
@@ -118,7 +135,7 @@ export default class GameObjectScene extends BaseScene {
       quat.rotateX(this.boxObject.rotation, this.boxObject.rotation, Math.PI * dt);
     }
     if (input.keyDown('X'.charCodeAt(0))) {
-      quat.rotateY(this.sphereObject.rotation, this.sphereObject.rotation, Math.PI * dt);
+      quat.rotateY(this.object2.rotation, this.object2.rotation, Math.PI * dt);
     }
 
   }
