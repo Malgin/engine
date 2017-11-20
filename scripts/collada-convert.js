@@ -10,6 +10,7 @@ var xml2js = require('xml2js');
 var path = require('path');
 var math = require('./includes/math');
 var ColladaMaterial = require('./includes/collada-material');
+var ColladaAnimation = require('./includes/collada-animation');
 
 const MODEL_EXTENSION = '.mdl';
 
@@ -52,27 +53,25 @@ class ColladaParser {
       }
 
       this.root = data.COLLADA;
-      this.colladaMaterial = new ColladaMaterial(this.root, opts);
-
-      this.materialsData = this.root.library_materials;
       this.geometriesData = this.root.library_geometries;
       this.visualScenesData = this.root.library_visual_scenes;
 
-      // Parsing
-
-      // Object hierarchy
-      if (this.includeHierarchy) {
-        let scene = this.getCurrentScene();
-        this.hierarchy = {};
-        this.buildObjectHierarchy(this.hierarchy, scene);
-        // console.log(util.inspect(this.hierarchy, false, null))
-      }
+      // Material, animation
+      this.colladaMaterial = new ColladaMaterial(this.root, opts);
+      this.colladaAnimation = new ColladaAnimation(this.root, opts);
 
       // Geometries
       if (this.includeGeometry) {
         this.geometry = this.prepareGeometries();
         this.regenerateGeometries(this.geometry);
         this.geometryOrder = this.getGeometryBinaryObjectOrder(this.geometry);
+      }
+
+      // Object hierarchy
+      if (this.includeHierarchy) {
+        let scene = this.getCurrentScene();
+        this.hierarchy = {};
+        this.buildObjectHierarchy(this.hierarchy, scene);
       }
 
       // console.log(util.inspect(geometryData, false, null))
@@ -116,6 +115,7 @@ class ColladaParser {
           result[geomID] = {
             id: geomID,
             name: geomName,
+            caps: {},
             geomData: this.getGeometryData(geom)
           };
         }
@@ -286,7 +286,7 @@ class ColladaParser {
         let found = true;
 
         for (let attribName in vertex) {
-          if (!this.compare(vertex[attribName], currentVertex[attribName])) {
+          if (!math.compare(vertex[attribName], currentVertex[attribName])) {
             found = false;
             break;
           }
@@ -298,20 +298,6 @@ class ColladaParser {
       }
 
       return -1;
-    }
-
-    compare (arr1, arr2) {
-      if (arr1.length !== arr2.length || arr1.length === 0) {
-        throw new Error('Compare array length mismatch');
-      }
-
-      for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-          return false;
-        }
-      }
-
-      return true;
     }
 
     assignVertexAttribs (meshData, indices, firstIndex, result) {
@@ -343,7 +329,10 @@ class ColladaParser {
       let materialID = this.getObjectMaterialID(data);
       object.material = this.colladaMaterial.getMaterial(materialID);
 
-      console.log(util.inspect(object, false, null))
+      // Adding bump to caps
+      if (object.material && object.material.bump && object.geometry) {
+        this.geometry[object.geometry].caps.bump = true;
+      }
 
       let dataChildren = data.node;
       if (dataChildren) {
@@ -427,7 +416,8 @@ class ColladaParser {
             name: geomName,
             indexCount: targetData.indexCount,
             vertexCount: targetData.vertexCount,
-            attributes: attribList
+            attributes: attribList,
+            caps: geom.caps
           });
 
           let data = {

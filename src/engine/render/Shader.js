@@ -5,32 +5,39 @@ const FRAGMENT_START = '[fragment]';
 const MAX_UNIFORMS = 20;
 const NO_UNIFORM = -2;
 
-const UNIFORM_LIGHT_DIR = 10;
+const UNIFORM_LIGHT_DIR = 15;
 const UNIFORM_PROJECTION_MATRIX = 0;
 const UNIFORM_MODELVIEW_MATRIX = 1;
-const UNIFORM_NORMAL_MATRIX = 2;
-const UNIFORM_TEXTURE0 = 3;
-const UNIFORM_TEXTURE1 = 4;
+const UNIFORM_VIEW_MATRIX = 2;
+const UNIFORM_NORMAL_MATRIX = 3;
+const UNIFORM_TEXTURE0 = 4;
+const UNIFORM_TEXTURE1 = 5;
+const UNIFORM_NORMAL_MAP = 6;
 
 const ATTRIBUTE_POSITION = 0;
 const ATTRIBUTE_NORMAL = 1;
 const ATTRIBUTE_TEXCOORD0 = 2;
 const ATTRIBUTE_TEXCOORD1 = 3;
 const ATTRIBUTE_COLOR = 4;
-
+const ATTRIBUTE_TANGENT = 5
+const ATTRIBUTE_BITANGENT = 6
 
 const UNIFORM_NAMES = {
   [UNIFORM_LIGHT_DIR]: 'uLightDir',
   [UNIFORM_PROJECTION_MATRIX]: 'uPMatrix',
   [UNIFORM_MODELVIEW_MATRIX]: 'uMVMatrix',
+  [UNIFORM_VIEW_MATRIX]: 'uViewMatrix',
   [UNIFORM_NORMAL_MATRIX]: 'uNormalMatrix',
   [UNIFORM_TEXTURE0]: 'uTexture0',
   [UNIFORM_TEXTURE1]: 'uTexture1',
+  [UNIFORM_NORMAL_MAP]: 'uNormalMap',
 };
 
 const ATTRIBUTE_NAMES = {
   [ATTRIBUTE_POSITION]: 'aPosition',
   [ATTRIBUTE_NORMAL]: 'aNormal',
+  [ATTRIBUTE_TANGENT]: 'aTangent',
+  [ATTRIBUTE_BITANGENT]: 'aBitangent',
   [ATTRIBUTE_TEXCOORD0]: 'aTexCoord0',
   [ATTRIBUTE_TEXCOORD1]: 'aTexCoord1',
   [ATTRIBUTE_COLOR]: 'aColor'
@@ -179,7 +186,7 @@ export default class Shader {
     if (result === NO_UNIFORM) {
       result = gl.getUniformLocation(this.program, UNIFORM_NAMES[id]);
       this.uniformLocations[id] = result;
-      if (result === -1) {
+      if (!result) {
         console.error(`Can't get shader uniform: ${UNIFORM_NAMES[id]}`);
       }
     }
@@ -191,18 +198,18 @@ export default class Shader {
     let gl = this.gl;
 
     let location = this.getUniformLocation(name);
-    if (location === -1) {
+    if (!location) {
       return;
     }
 
-    gl.uniform1i(location, false, value);
+    gl.uniform1i(location, value);
   }
 
   setUniformMat4 (name, value) {
     let gl = this.gl;
 
     let location = this.getUniformLocation(name);
-    if (location === -1) {
+    if (!location) {
       return;
     }
 
@@ -213,7 +220,7 @@ export default class Shader {
     let gl = this.gl;
 
     let location = this.getUniformLocation(name);
-    if (location === -1) {
+    if (!location) {
       return;
     }
 
@@ -224,7 +231,7 @@ export default class Shader {
     let gl = this.gl;
 
     let location = this.getUniformLocation(name);
-    if (location === -1) {
+    if (!location) {
       return;
     }
 
@@ -236,12 +243,16 @@ export default class Shader {
 Shader.UNIFORM_LIGHT_DIR = UNIFORM_LIGHT_DIR;
 Shader.UNIFORM_PROJECTION_MATRIX = UNIFORM_PROJECTION_MATRIX;
 Shader.UNIFORM_MODELVIEW_MATRIX = UNIFORM_MODELVIEW_MATRIX;
+Shader.UNIFORM_VIEW_MATRIX = UNIFORM_VIEW_MATRIX;
 Shader.UNIFORM_NORMAL_MATRIX = UNIFORM_NORMAL_MATRIX;
 Shader.UNIFORM_TEXTURE0 = UNIFORM_TEXTURE0;
 Shader.UNIFORM_TEXTURE1 = UNIFORM_TEXTURE1;
+Shader.UNIFORM_NORMAL_MAP = UNIFORM_NORMAL_MAP;
 
 Shader.ATTRIBUTE_POSITION = ATTRIBUTE_POSITION;
 Shader.ATTRIBUTE_TEXCOORD0 = ATTRIBUTE_TEXCOORD0;
 Shader.ATTRIBUTE_TEXCOORD1 = ATTRIBUTE_TEXCOORD1;
 Shader.ATTRIBUTE_NORMAL = ATTRIBUTE_NORMAL;
+Shader.ATTRIBUTE_TANGENT = ATTRIBUTE_TANGENT;
+Shader.ATTRIBUTE_BITANGENT = ATTRIBUTE_BITANGENT;
 Shader.ATTRIBUTE_COLOR = ATTRIBUTE_COLOR;

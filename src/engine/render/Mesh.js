@@ -1,14 +1,23 @@
 import app from '../Application';
 import math from 'math';
-const { vec3 } = math;
+const { vec3, vec2 } = math;
 
 const { floor } = Math;
 
-let helperVec = vec3.create();
 let normal = vec3.create();
 let a = vec3.create();
 let b = vec3.create();
 let c = vec3.create();
+let deltaPos1 = vec3.create();
+let deltaPos2 = vec3.create();
+let tangent = vec3.create();
+let bitangent = vec3.create();
+
+let uvA = vec2.create();
+let uvB = vec2.create();
+let uvC = vec2.create();
+let deltaUV1 = vec2.create();
+let deltaUV2 = vec2.create();
 
 const VERTEX_SIZE = 3;
 const NORMAL_SIZE = 3;
@@ -77,6 +86,15 @@ export default class Mesh {
       this.normalOffsetBytes = currentOffset * 4;
       currentOffset += NORMAL_SIZE;
     }
+    if (this.hasTBN) {
+      this.tangentOffset = currentOffset;
+      this.tangentOffsetBytes = currentOffset * 4;
+      currentOffset += NORMAL_SIZE;
+
+      this.bitangentOffset = currentOffset;
+      this.bitangentOffsetBytes = currentOffset * 4;
+      currentOffset += NORMAL_SIZE;
+    }
     if (this.hasTexCoord0) {
       this.texCoord0Offset = currentOffset;
       this.texCoord0OffsetBytes = currentOffset * 4;
@@ -104,6 +122,18 @@ export default class Mesh {
         bufferData[currentOffset] = this.normals[i * 3];
         bufferData[currentOffset + 1] = this.normals[i * 3 + 1];
         bufferData[currentOffset + 2] = this.normals[i * 3 + 2];
+      }
+
+      if (this.hasTBN) {
+        currentOffset = offset + this.tangentOffset;
+        bufferData[currentOffset] = this.tangents[i * 3];
+        bufferData[currentOffset + 1] = this.tangents[i * 3 + 1];
+        bufferData[currentOffset + 2] = this.tangents[i * 3 + 2];
+
+        currentOffset = offset + this.bitangentOffset;
+        bufferData[currentOffset] = this.bitangents[i * 3];
+        bufferData[currentOffset + 1] = this.bitangents[i * 3 + 1];
+        bufferData[currentOffset + 2] = this.bitangents[i * 3 + 2];
       }
 
       if (this.hasTexCoord0) {
@@ -136,6 +166,8 @@ export default class Mesh {
     if (!this.keepData) {
       this.vertices = null;
       this.normals = null;
+      this.tangents = null;
+      this.bitangents = null;
       this.texCoord0 = null;
       this.colors = null;
       this.indices = null;
@@ -146,6 +178,7 @@ export default class Mesh {
     let result = 0;
     if (this.hasVertices) result += VERTEX_SIZE;
     if (this.hasNormals) result += NORMAL_SIZE;
+    if (this.hasTBN) result += NORMAL_SIZE * 2;
     if (this.hasColors) result += COLOR_SIZE;
     if (this.hasTexCoord0) result += TEXCOORD_SIZE;
     return result;
@@ -232,6 +265,98 @@ export default class Mesh {
 
     this.normals = normals;
     this.hasNormals = true;
+  }
+
+  // Tangent space calculation
+  calculateTBN () {
+    if (!this .hasTexCoord0) {
+      throw new Error('Can\'t calculate tangent space without TexCoord0');
+    }
+
+    let vertices = this.vertices;
+    let texcoords = this.texCoord0;
+    let indices = this.indices;
+    let faceCount = this.faceCount;
+
+    let tangents = new Array(this.vertices.length);
+    let bitangents = new Array(this.vertices.length);
+
+    for (let i = 0; i < this.vertices.length; i++) {
+      tangents[i] = 0;
+      bitangents[i] = 0;
+    }
+
+    for (let i = 0; i < faceCount; i++) {
+      let faceOffset = i * 3;
+      let indexA = indices ? indices[faceOffset] * 3 : faceOffset * 3;
+      let indexB = indices ? indices[faceOffset + 1] * 3 : faceOffset * 3 + 3;
+      let indexC = indices ? indices[faceOffset + 2] * 3 : faceOffset * 3 + 6;
+
+      let indexUVA = indices ? indices[faceOffset] * 2 : faceOffset * 2;
+      let indexUVB = indices ? indices[faceOffset + 1] * 2 : faceOffset * 2 + 2;
+      let indexUVC = indices ? indices[faceOffset + 2] * 2 : faceOffset * 2 + 4;
+
+      vec3.set(a, vertices[indexA], vertices[indexA + 1], vertices[indexA + 2]);
+      vec3.set(b, vertices[indexB], vertices[indexB + 1], vertices[indexB + 2]);
+      vec3.set(c, vertices[indexC], vertices[indexC + 1], vertices[indexC + 2]);
+
+      vec2.set(uvA, texcoords[indexUVA], texcoords[indexUVA + 1]);
+      vec2.set(uvB, texcoords[indexUVB], texcoords[indexUVB + 1]);
+      vec2.set(uvC, texcoords[indexUVC], texcoords[indexUVC + 1]);
+
+      vec3.subtract(deltaPos1, b, a);
+      vec3.subtract(deltaPos2, c, a);
+
+      vec2.subtract(deltaUV1, uvB, uvA);
+      vec2.subtract(deltaUV2, uvC, uvA);
+
+      let r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
+      vec3.scale(a, deltaPos1, deltaUV2[1] * r);
+      vec3.scale(b, deltaPos2, deltaUV1[1] * r);
+      vec3.subtract(tangent, a, b);
+
+      vec3.scale(a, deltaPos2, deltaUV1[0] * r);
+      vec3.scale(b, deltaPos1, deltaUV2[0] * r);
+      vec3.subtract(bitangent, a, b);
+
+      for (let j = 0; j < 3; j++) {
+        tangents[indexA + j] += tangent[j];
+        tangents[indexB + j] += tangent[j];
+        tangents[indexC + j] += tangent[j];
+        bitangents[indexA + j] += bitangent[j];
+        bitangents[indexB + j] += bitangent[j];
+        bitangents[indexC + j] += bitangent[j];
+      }
+    }
+
+    for (let i = 0; i < this.vertices.length / 3; i++) {
+      vec3.set(a, tangents[i * 3], tangents[i * 3 + 1], tangents[i * 3 + 2]);
+      vec3.set(b, bitangents[i * 3], bitangents[i * 3 + 1], bitangents[i * 3 + 2]);
+      vec3.set(c, this.normals[i * 3], this.normals[i * 3 + 1], this.normals[i * 3 + 2]);
+
+      // Orthonormalize matrix. Since it's almost orthonormal we can just correct tangent a little.
+      // t = normalize(t - n * dot(n, t));
+      let dot = vec3.dot(c, a);
+      vec3.scaleAndAdd(a, a, c, -dot);
+
+      // Chesk the tangent direction
+      vec3.cross(normal, c, a);
+      if (vec3.dot(normal, b) >= 0) {
+        vec3.scale(a, a, -1); // invert tangent
+      }
+
+      vec3.normalize(a, a);
+      vec3.normalize(b, b);
+
+      for (let j = 0; j < 3; j++) {
+        tangents[i * 3 + j] = a[j];
+        bitangents[i * 3 + j] = b[j];
+      }
+    }
+
+    this.tangents = tangents;
+    this.bitangents = bitangents;
+    this.hasTBN = true;
   }
 
 }

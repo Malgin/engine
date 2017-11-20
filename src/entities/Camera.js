@@ -39,7 +39,7 @@ export default class Camera {
   }
 
   recalculate () {
-    mat4.perspective(this.projectionMatrix, Math.PI / 2, app.instance.width / app.instance.height, 0.1, 1000);
+    mat4.perspective(this.projectionMatrix, Math.PI / 3, app.instance.width / app.instance.height, 0.1, 1000);
 
     let m = this.matrix;
 

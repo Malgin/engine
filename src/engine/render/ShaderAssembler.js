@@ -4,6 +4,7 @@ import whiteShader from './shaders/white.shader';
 import vertexColorShader from './shaders/vertexColor.shader';
 import directionalLightingShader from './shaders/directionalLighting.shader';
 import directionalLightingTextureShader from './shaders/directionalLightingTexture.shader';
+import directionalBumpMapping from './shaders/directionalBumpMapping.shader';
 
 let dataObject = {};
 
@@ -21,6 +22,7 @@ export default class ShaderAssembler {
     this.vertexColorShader = Resources.addShader('vertexColorShader', vertexColorShader);
     this.directionalLightingShader = Resources.addShader('directionalLightingShader', directionalLightingShader);
     this.directionalLightingTextureShader = Resources.addShader('directionalLightingTextureShader', directionalLightingTextureShader);
+    this.directionalBumpMapping = Resources.addShader('directionalBumpMapping', directionalBumpMapping);
   }
 
   getShaderForROP (renderOperation) {
@@ -46,7 +48,9 @@ export default class ShaderAssembler {
   }
 
   getShaderWithCaps (data) {
-    if (dataObject.texture0 && dataObject.light0) {
+    if (dataObject.normalMap && dataObject.texture0 && dataObject.light0) {
+      return this.directionalBumpMapping;
+    } else if (dataObject.texture0 && dataObject.light0) {
       return this.directionalLightingTextureShader;
     } else if (dataObject.light0) {
       return this.directionalLightingShader;

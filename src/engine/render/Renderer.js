@@ -12,12 +12,16 @@ let normalMatrix = mat4.create();
 const UNIFORM_LIGHT_DIR = Shader.UNIFORM_LIGHT_DIR;
 const UNIFORM_PROJECTION_MATRIX = Shader.UNIFORM_PROJECTION_MATRIX;
 const UNIFORM_MODELVIEW_MATRIX = Shader.UNIFORM_MODELVIEW_MATRIX;
+const UNIFORM_VIEW_MATRIX = Shader.UNIFORM_VIEW_MATRIX;
 const UNIFORM_TEXTURE0 = Shader.UNIFORM_TEXTURE0;
 const UNIFORM_TEXTURE1 = Shader.UNIFORM_TEXTURE1;
+const UNIFORM_NORMAL_MAP = Shader.UNIFORM_NORMAL_MAP;
 const UNIFORM_NORMAL_MATRIX = Shader.UNIFORM_NORMAL_MATRIX;
 
 const ATTRIBUTE_POSITION = Shader.ATTRIBUTE_POSITION;
 const ATTRIBUTE_NORMAL = Shader.ATTRIBUTE_NORMAL;
+const ATTRIBUTE_TANGENT = Shader.ATTRIBUTE_TANGENT;
+const ATTRIBUTE_BITANGENT = Shader.ATTRIBUTE_BITANGENT;
 const ATTRIBUTE_TEXCOORD0 = Shader.ATTRIBUTE_TEXCOORD0;
 const ATTRIBUTE_TEXCOORD1 = Shader.ATTRIBUTE_TEXCOORD1;
 const ATTRIBUTE_COLOR = Shader.ATTRIBUTE_COLOR;
@@ -29,9 +33,9 @@ export default class Renderer {
     this.shaderAssembler = new ShaderAssembler();
     this.scene = opts.scene;
 
-    this.worldMatrix = mat4.create();
+    this.viewMatrix = mat4.create();
     this.projectionMatrix = mat4.create();
-    this.lightDir = vec3.fromValues(1, -4, -3);
+    this.lightDir = vec3.fromValues(-1, -1, -1);
     this.renderOps = [];
   }
 
@@ -86,8 +90,8 @@ export default class Renderer {
     }
   }
 
-  setMatrices (world, projection) {
-    mat4.copy(this.worldMatrix, world);
+  setMatrices (view, projection) {
+    mat4.copy(this.viewMatrix, view);
     mat4.copy(this.projectionMatrix, projection);
   }
 
@@ -120,23 +124,36 @@ export default class Renderer {
     }
 
     // Getting modelview matrix
-    mat4.multiply(modelViewMatrix, this.worldMatrix, transform);
+    mat4.multiply(modelViewMatrix, this.viewMatrix, transform);
 
     // Getting normal matrix
-    mat4.invert(normalMatrix, transform);
+    mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
     // Shader uniforms
     shader.use();
     shader.setUniformMat4(UNIFORM_PROJECTION_MATRIX, this.projectionMatrix);
     shader.setUniformMat4(UNIFORM_MODELVIEW_MATRIX, modelViewMatrix);
+    shader.setUniformMat4(UNIFORM_VIEW_MATRIX, this.viewMatrix);
+
+    let currentTexture = 0;
 
     // Textures
     if (texture0) {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, texture0);
       shader.setUniform1i(UNIFORM_TEXTURE0, 0);
+      currentTexture += 1;
     }
+
+    if (normalMap) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, normalMap);
+      shader.setUniform1i(UNIFORM_NORMAL_MAP, 1);
+      currentTexture += 1;
+    }
+
+    // Vertex attribs
 
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
 
@@ -160,6 +177,15 @@ export default class Renderer {
       // Normals
       gl.enableVertexAttribArray(ATTRIBUTE_NORMAL);
       gl.vertexAttribPointer(ATTRIBUTE_NORMAL, 3, gl.FLOAT, false, stride, mesh.normalOffsetBytes);
+    }
+
+    if (mesh.hasTBN) {
+      // Tangents
+      gl.enableVertexAttribArray(ATTRIBUTE_TANGENT);
+      gl.vertexAttribPointer(ATTRIBUTE_TANGENT, 3, gl.FLOAT, false, stride, mesh.tangentOffsetBytes);
+      // Bitangents
+      gl.enableVertexAttribArray(ATTRIBUTE_BITANGENT);
+      gl.vertexAttribPointer(ATTRIBUTE_BITANGENT, 3, gl.FLOAT, false, stride, mesh.bitangentOffsetBytes);
     }
 
     // Colors

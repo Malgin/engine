@@ -132,7 +132,7 @@ export default class GameObjectScene extends BaseScene {
     let input = app.instance.input;
 
     if (input.keyDown('C'.charCodeAt(0))) {
-      quat.rotateX(this.boxObject.rotation, this.boxObject.rotation, Math.PI * dt);
+      quat.rotateX(this.object2.rotation, this.object2.rotation, Math.PI * dt);
     }
     if (input.keyDown('X'.charCodeAt(0))) {
       quat.rotateY(this.object2.rotation, this.object2.rotation, Math.PI * dt);

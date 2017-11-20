@@ -55,7 +55,7 @@ export default class ModelLoader {
     for (let i = 0; i < geometry.length; i++) {
       let mesh = new Mesh();
       let geomData = geometry[i];
-      let { indexCount, vertexCount, attributes, name } = geomData;
+      let { indexCount, vertexCount, attributes, name, caps } = geomData;
 
       let indices = [];
       for (let j = 0; j < indexCount; j++) {
@@ -91,6 +91,10 @@ export default class ModelLoader {
 
       if (!mesh.hasNormals) {
         mesh.calculateNormals();
+      }
+
+      if (caps && caps.bump) {
+        mesh.calculateTBN();
       }
 
       mesh.createBuffer();
