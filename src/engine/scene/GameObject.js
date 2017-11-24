@@ -2,6 +2,8 @@ import math from 'math';
 import app from '../Application';
 import Resources from '../Resources';
 import Material from 'engine/render/Material';
+import Transform from './Transform';
+import AnimationController from '../animation/AnimationController';
 
 const { quat, vec3, mat4 } = math;
 
@@ -15,11 +17,8 @@ export default class GameObject {
     this.gl = app.gl;
     this.parent = null;
     this.children = [];
-    this.position = vec3.create();
-    this.rotation = quat.create();
-    this.scale = vec3.fromValues(1, 1, 1);
-    this.transform = mat4.create();
-    this.worldTransform = mat4.create();
+    this.transform = new Transform(this);
+
     this.mesh = null;
     this.enabled = true;
     this.material = null;
@@ -60,11 +59,12 @@ export default class GameObject {
   // Loading
   //------------------------------------------------------------------------
 
-  loadHierarchy (hierarchy, opts) {
+  loadHierarchy (hierarchy, opts, depth = 0) {
     if (!hierarchy) {
       throw new Error('hierarchy can\'t be null');
     }
 
+    let skipAnimation = opts && opts.skipAnimation;
     let material = opts && opts.material;
     if (!material && hierarchy.material) {
       material = new Material();
@@ -87,12 +87,10 @@ export default class GameObject {
     }
 
     if (hierarchy.transform) {
-      mat4.copy(this.transform, hierarchy.transform);
+      this.transform.setFromMat4(hierarchy.transform);
     } else {
-      mat4.copy(this.transform, identityMatrix);
+      this.transform.setIdentity();
     }
-
-    this.updatePosRotScaleFromTransform();
 
     if (hierarchy.geometry) {
       let mesh = null;
@@ -120,8 +118,13 @@ export default class GameObject {
         let child = new GameObject();
         child.url = this.url;
         this.addChild(child);
-        child.loadHierarchy(hierarchy.children[i], opts);
+        child.loadHierarchy(hierarchy.children[i], opts, depth + 1);
       }
+    }
+
+    if (depth === 0 && !skipAnimation && Resources.animationUrls[this.url]) {
+      this.animationController = new AnimationController(this);
+      this.animationController.loadAnimations(this.url);
     }
   }
 
@@ -131,29 +134,20 @@ export default class GameObject {
 
   updateTransform (parentTransform) {
     if (this.rigidbody) {
-      mat4.copy(this.transform, this.rigidbody.transformMatrix);
-      mat4.copy(this.worldTransform, this.rigidbody.transformMatrix);
-    } else if (parentTransform) {
-      mat4.fromRotationTranslationScale(this.transform, this.rotation, this.position, this.scale);
-      mat4.multiply(this.worldTransform, parentTransform, this.transform);
+      // TODO: implement using Transaform class
+      // mat4.copy(this.transform, this.rigidbody.transformMatrix);
+      // mat4.copy(this.worldTransform, this.rigidbody.transformMatrix);
     } else {
-      mat4.fromRotationTranslationScale(this.transform, this.rotation, this.position, this.scale);
-      mat4.copy(this.worldTransform, this.transform);
+      this.transform.updateTransformMatrices(parentTransform);
     }
 
     let children = this.children;
     let length = children.length;
-    let worldTransform = this.worldTransform;
+    let worldTransform = this.transform._worldTransform;
     for (let i = 0; i < length; i++) {
       let child = children[i];
       child.updateTransform(worldTransform);
     }
-  }
-
-  updatePosRotScaleFromTransform () {
-    mat4.getScaling(this.scale, this.transform);
-    mat4.getRotation(this.rotation, this.transform);
-    mat4.getTranslation(this.position, this.transform);
   }
 
   //------------------------------------------------------------------------
@@ -161,6 +155,14 @@ export default class GameObject {
   //------------------------------------------------------------------------
 
   update (dt) {
+    if (this.animationController) {
+      this.animationController.tick(dt);
+    }
+
+    if (this.tick) {
+      this.tick(dt);
+    }
+
     let children = this.children;
     for (let i = 0, len = children.length; i < len; i++) {
       let child = children[i];
@@ -175,7 +177,7 @@ export default class GameObject {
 
     renderOp.mesh = this.mesh;
     renderOp.material = this.material;
-    renderOp.transform = this.worldTransform;
+    renderOp.transform = this.transform._worldTransform;
   }
 
 }

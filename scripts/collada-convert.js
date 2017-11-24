@@ -22,7 +22,7 @@ var fileExtension = path.extname(dataFile);
 var baseName = path.basename(dataFile, fileExtension);
 var targetFile = path.join(fileDir, baseName + MODEL_EXTENSION);
 
-const MODE_TRIANGLES = 'triangles;'
+const MODE_TRIANGLES = 'triangles';
 
 class ColladaParser {
 
@@ -66,6 +66,8 @@ class ColladaParser {
         this.regenerateGeometries(this.geometry);
         this.geometryOrder = this.getGeometryBinaryObjectOrder(this.geometry);
       }
+
+      this.idToNameMap = {};
 
       // Object hierarchy
       if (this.includeHierarchy) {
@@ -329,6 +331,8 @@ class ColladaParser {
       let materialID = this.getObjectMaterialID(data);
       object.material = this.colladaMaterial.getMaterial(materialID);
 
+      this.idToNameMap[object.id] = object.name;
+
       // Adding bump to caps
       if (object.material && object.material.bump && object.geometry) {
         this.geometry[object.geometry].caps.bump = true;
@@ -435,9 +439,21 @@ class ColladaParser {
         jsonData.hierarchy = this.hierarchy;
       }
 
+      let animationData = [];
+      if (this.includeAnimation && this.colladaAnimation.hasAnimation) {
+        jsonData.animation = this.colladaAnimation.getJSON(this.idToNameMap);
+        for (let i = 0; i < this.colladaAnimation.animationOrder.length; i++) {
+          let animName = this.colladaAnimation.animationOrder[i];
+          let dataArray = this.colladaAnimation.getAnimationData(animName);
+          animationData.push(dataArray);
+        }
+      }
+
+      // console.log('data', util.inspect(jsonData, false, null));
+
       let jsonString = JSON.stringify(jsonData);
       let jsonLength = Buffer.byteLength(jsonString);
-      let bufferSize = 2 + jsonLength + geomSize;
+      let bufferSize = 2 + jsonLength + geomSize + this.colladaAnimation.byteSize;
 
       let buffer = new Buffer(bufferSize);
       let currentOffset = 0;
@@ -450,6 +466,12 @@ class ColladaParser {
       for (let i = 0; i < geometryData.length; i++) {
         currentOffset += this.writeUIntArray(buffer, currentOffset, geometryData[i].indices);
         currentOffset += this.writeFloatArray(buffer, currentOffset, geometryData[i].vertices);
+      }
+
+      for (let i = 0; i < animationData.length; i++) {
+        // console.info('Write animation', animationData[i]);
+        // console.info('asd', i, animationData[i][0]);
+        currentOffset += this.writeFloatArray(buffer, currentOffset, animationData[i]);
       }
 
       writeStream.write(buffer);

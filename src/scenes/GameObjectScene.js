@@ -53,13 +53,22 @@ export default class GameObjectScene extends BaseScene {
     //   }
     // );
 
+    this.animObject = new GameObject();
+    this.scene.addChild(this.animObject);
+    this.animObject.loadHierarchy(
+      Resources.getHierarchy('resources/models/anim1.mdl')
+    );
+    quat.fromEuler(this.animObject.transform.rotation, 40, 30, 0) ;
+    this.animObject.transform.position[0] = 1.5;
+
     this.object2 = new GameObject();
     this.scene.addChild(this.object2);
     this.object2.loadHierarchy(
       Resources.getHierarchy('resources/models/textureTest/textured_cube.mdl')
       // Resources.getHierarchy('resources/models/textureTest/textured_plane.mdl')
     );
-    this.object2.position[1] = 3;
+    this.object2.transform.position[1] = 3;
+
     // this.object2.scale[0] = 0.01;
     // this.object2.scale[1] = 0.01;
     // this.object2.scale[2] = 0.01;
@@ -132,10 +141,10 @@ export default class GameObjectScene extends BaseScene {
     let input = app.instance.input;
 
     if (input.keyDown('C'.charCodeAt(0))) {
-      quat.rotateX(this.object2.rotation, this.object2.rotation, Math.PI * dt);
+      quat.rotateX(this.object2.transform.rotation, this.object2.transform.rotation, Math.PI * dt);
     }
     if (input.keyDown('X'.charCodeAt(0))) {
-      quat.rotateY(this.object2.rotation, this.object2.rotation, Math.PI * dt);
+      quat.rotateY(this.object2.transform.rotation, this.object2.transform.rotation, Math.PI * dt);
     }
 
   }

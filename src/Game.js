@@ -25,6 +25,7 @@ export default class Game extends Application {
     return Resources.loadFileList([
       // 'resources/models/group.mdl',
       'resources/models/textureTest/textured_cube.mdl',
+      'resources/models/anim1.mdl',
       // 'resources/models/textureTest/textured_plane.mdl'
     ], ModelLoader);
   }

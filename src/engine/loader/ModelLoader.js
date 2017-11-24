@@ -1,5 +1,6 @@
 import Resources from 'engine/Resources';
 import Mesh from 'engine/render/Mesh';
+import AnimationData from 'engine/animation/AnimationData';
 
 const ATTRIB_POSITION = 'POSITION';
 const ATTRIB_NORMAL = 'NORMAL';
@@ -10,6 +11,8 @@ const ATTRIB_COUNT = {
   [ATTRIB_NORMAL]: 3,
   [ATTRIB_TEXCOORD0]: 2
 };
+
+const { floor } = Math;
 
 export default class ModelLoader {
 
@@ -46,6 +49,12 @@ export default class ModelLoader {
     // Geometry
     if (modelData.geometry) {
       offset += this.loadGeometry(modelData.geometry, dataView, offset, opts);
+    }
+
+    let animations = null;
+    if (modelData.animation) {
+      console.info('animation', modelData.animation);
+      offset += this.loadAnimation(modelData.animation, dataView, offset, opts);
     }
   }
 
@@ -99,6 +108,24 @@ export default class ModelLoader {
 
       mesh.createBuffer();
       Resources.addMesh(`${opts.url}:${name}`, mesh);
+    }
+
+    return bytesRead;
+  }
+
+  static loadAnimation (animations, dataView, offset, opts) {
+    let bytesRead = 0;
+
+    for (let i = 0; i < animations.length; i++) {
+      let anim = animations[i];
+      let frameData = [];
+      let animationData = new AnimationData(anim);
+      let readCount = animationData.getElementCount();
+      // let readCount = animationData.stride * animationData.frameCount;
+      bytesRead += this.readFloatArray(frameData, readCount, dataView, offset + bytesRead);
+      animationData.loadFrames(frameData);
+      animationData.url = opts.url;
+      Resources.addAnimationData(animationData, animationData.name, opts.url);
     }
 
     return bytesRead;

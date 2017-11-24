@@ -20,8 +20,11 @@ class Resources {
     this.shaders = {};
     this.meshes = {};
     this.hierarchy = {};
+    this.animations = {};
     this.textures = {};
     this.objectTextures = {}; // textures that referenced by the objects
+
+    this.animationUrls = {};
   }
 
   //------------------------------------------------------------------------
@@ -255,6 +258,24 @@ class Resources {
   getMesh (name, url) {
     let key = url ? `${url}:${name}` : name;
     return this.meshes[key];
+  }
+
+  //------------------------------------------------------------------------
+  // Animation
+  //------------------------------------------------------------------------
+
+  addAnimationData (animationData, name, url) {
+    let key = url ? `${url}:${name}` : name;
+    if (this.animations[key]) {
+      throw new Error('Animation already exists:' + key);
+    }
+    this.animationUrls[url] = true;
+    this.animations[key] = animationData;
+  }
+
+  getAnimationData (name, url) {
+    let key = url ? `${url}:${name}` : name;
+    return this.animations[key];
   }
 
 };

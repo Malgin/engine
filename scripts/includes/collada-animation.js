@@ -1,19 +1,39 @@
+
 var util = require('util');
 var math = require('./math');
+
+const EXPORT_MATRIX = false;
 
 module.exports = class ColladaAnimation {
 
   constructor (root, opts = {}) {
     this.root = root;
     this.libraryAnimations = this.root.library_animations;
+    this.exportMatrix = EXPORT_MATRIX;
 
     this.animations = {}; // Maps objectID -> animation
+
+    this.byteSize = 0;
 
     if (this.libraryAnimations) {
       this.addAnimation(this.libraryAnimations[0].animation);
     }
 
-    this.channels = {};
+    this.animationOrder = Object.keys(this.animations);
+  }
+
+  get hasAnimation () {
+    return this.animationOrder.length > 0;
+  }
+
+  getJSON (idToName) {
+    let result = [];
+    return this.animationOrder.reduce((result, objectName) => {
+      let animationData = this.getAnimationForObject(objectName);
+      animationData.name = idToName[objectName] || objectName;
+      result.push(animationData);
+      return result;
+    }, result);
   }
 
   addAnimation (animationList) {
@@ -57,7 +77,6 @@ module.exports = class ColladaAnimation {
         }
 
         this.animations[animTarget] = animation;
-        // console.log('ANIM', animTarget, util.inspect(this.animations, false, null));
       }
 
       if (animationData.animation) {
@@ -66,11 +85,40 @@ module.exports = class ColladaAnimation {
     }
   }
 
+  hasAnimation (objectID) {
+    return !!this.animations[objectID];
+  }
+
+  getAnimationData (objectName) {
+    return this.animations[objectName].data;
+  }
+
+  getAnimationForObject (objectID) {
+    let animation = this.animations[objectID];
+    if (!animation) {
+      return undefined;
+    }
+
+    return {
+      duration: animation.duration,
+      fps: animation.fps,
+      frameCount: animation.frameCount,
+      isMatrix: animation.isMatrix,
+      hasPosition: animation.hasPosition,
+      hasRotation: animation.hasRotation,
+      hasScale: animation.hasScale
+    }
+  }
+
   addPosRotScale (matrixArray, animation) {
     let position = [];
     let rotation = [];
     let scale = [];
     let scaleList = []
+    let matrices = [];
+    let matrixList = [];
+
+    let isMatrix = this.exportMatrix;
 
     if (matrixArray.length % 16 !== 0) {
       throw new Error('Matrix list has invalid size: ' + matrixArray.length);
@@ -79,16 +127,19 @@ module.exports = class ColladaAnimation {
     let count = Math.floor(matrixArray.length / 16);
 
     for (let i = 0; i < count; i++) {
-      let matrix = matrixArray.slice(i * 16, (i + 1) * 16 - 1);
+      let matrix = matrixArray.slice(i * 16, (i + 1) * 16);
       math.mat4transpose(matrix);
+
+      matrixList.push(matrix);
+      Array.prototype.push.apply(matrices, matrix);
       let pos = math.getMat4Translation(matrix);
       let rot = math.getMat4Rotation(matrix);
       let s = math.getMat4Scaling(matrix);
+      scaleList.push(s);
 
       Array.prototype.push.apply(position, pos);
       Array.prototype.push.apply(rotation, rot);
       Array.prototype.push.apply(scale, s);
-      scaleList.push(s);
     }
 
     let firstScale = scaleList[0];
@@ -101,17 +152,23 @@ module.exports = class ColladaAnimation {
     }
 
     let resultList = [];
-    for (let i = 0; i < count; i++) {
-      math.addArrayToArray(resultList, position, i * 3, 3);
-      math.addArrayToArray(resultList, rotation, i * 4, 4);
+
+    if (!isMatrix) {
+      Array.prototype.push.apply(resultList, position);
+      Array.prototype.push.apply(resultList, rotation);
       if (hasOtherScale) {
-        math.addArrayToArray(resultList, scale, i * 3, 3);
+        Array.prototype.push.apply(resultList, scale);
       }
+    } else {
+      resultList = matrices;
     }
 
-    animation.hasPosition = true;
-    animation.hasRotation = true;
-    animation.hasScale = hasOtherScale;
+    this.byteSize += resultList.length * 4;
+    animation.hasPosition = true && !isMatrix;
+    animation.hasRotation = true && !isMatrix;
+    animation.frameCount = count;
+    animation.hasScale = hasOtherScale && !isMatrix;
+    animation.isMatrix = isMatrix;
     animation.data = resultList;
   }
 

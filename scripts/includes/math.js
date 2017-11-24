@@ -110,8 +110,8 @@ exports.compare = function (arr1, arr2) {
     }
 
     for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-        return false;
+        if (Math.abs(arr1[i] - arr2[i]) > 0.0000001) {
+            return false;
         }
     }
 
