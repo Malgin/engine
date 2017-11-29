@@ -5,11 +5,13 @@ import AnimationData from 'engine/animation/AnimationData';
 const ATTRIB_POSITION = 'POSITION';
 const ATTRIB_NORMAL = 'NORMAL';
 const ATTRIB_TEXCOORD0 = 'TEXCOORD0';
+const ATTRIB_WEIGHT = 'WEIGHT';
 
 const ATTRIB_COUNT = {
   [ATTRIB_POSITION]: 3,
   [ATTRIB_NORMAL]: 3,
-  [ATTRIB_TEXCOORD0]: 2
+  [ATTRIB_TEXCOORD0]: 2,
+  [ATTRIB_WEIGHT]: 6
 };
 
 const { floor } = Math;
@@ -95,6 +97,9 @@ export default class ModelLoader {
           case ATTRIB_TEXCOORD0:
             mesh.setTexCoord0(attribArray);
             break;
+          case ATTRIB_WEIGHT:
+            // mesh.setWeights(attribArray);
+            break;
         }
       }
 
@@ -121,7 +126,6 @@ export default class ModelLoader {
       let frameData = [];
       let animationData = new AnimationData(anim);
       let readCount = animationData.getElementCount();
-      // let readCount = animationData.stride * animationData.frameCount;
       bytesRead += this.readFloatArray(frameData, readCount, dataView, offset + bytesRead);
       animationData.loadFrames(frameData);
       animationData.url = opts.url;

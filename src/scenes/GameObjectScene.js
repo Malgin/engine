@@ -61,6 +61,10 @@ export default class GameObjectScene extends BaseScene {
     quat.fromEuler(this.animObject.transform.rotation, 40, 30, 0) ;
     this.animObject.transform.position[0] = 1.5;
 
+    this.animObject.animationController.addAnimation('anim1', 0, 54);
+    this.animObject.animationController.addAnimation('anim2', 55, 79);
+    this.animObject.animationController.play('anim2');
+
     this.object2 = new GameObject();
     this.scene.addChild(this.object2);
     this.object2.loadHierarchy(

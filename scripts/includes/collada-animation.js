@@ -12,6 +12,7 @@ module.exports = class ColladaAnimation {
     this.exportMatrix = EXPORT_MATRIX;
 
     this.animations = {}; // Maps objectID -> animation
+    this.skinning = null;
 
     this.byteSize = 0;
 
@@ -27,13 +28,28 @@ module.exports = class ColladaAnimation {
   }
 
   getJSON (idToName) {
-    let result = [];
-    return this.animationOrder.reduce((result, objectName) => {
+    let animation = {};
+
+    if (this.skinning) {
+      animation.skinning = this.skinning;
+    }
+
+    animation.objects = this.animationOrder.reduce((result, objectName) => {
       let animationData = this.getAnimationForObject(objectName);
       animationData.name = idToName[objectName] || objectName;
       result.push(animationData);
       return result;
-    }, result);
+    }, []);
+
+    return animation;
+  }
+
+  addSkinningData (name, data) {
+    if (!this.skinning) {
+      this.skinning = {};
+    }
+
+    this.skinning[name] = data;
   }
 
   addAnimation (animationList) {

@@ -1,5 +1,6 @@
+
 exports.getMatrix4 = function (data) {
-    let matrix = data.split(' ');
+    let matrix = Array.isArray(data) ? data : data.split(' ');
 
     if (matrix.length !== 16) {
         throw new Error('Wrong matrix format. Should be array of 16 float.');
@@ -15,7 +16,37 @@ exports.getMatrix4 = function (data) {
     this.mat4transpose(matrix); // we need column major matrices
 
     return matrix;
-  }
+}
+
+exports.getMatrix4Array = function (data) {
+    let elements = data.split(' ');
+
+    let count = elements.length / 16;
+    let result = [];
+
+    for (let i = 0; i < count; i++) {
+        let matrix = this.getMatrix4(elements.slice(i * 16, (i + 1) * 16));
+        result.push(matrix);
+    }
+
+    return result;
+}
+
+exports.getFloatArray = function (data) {
+    let elements = data.split(' ');
+
+    let result = [];
+
+    for (let i = 0; i < elements.length; i++) {
+        let element = parseFloat(elements[i]);
+        if (isNaN(element)) {
+            throw new Error('Element is not a number. ' + data);
+        }
+        result.push(element);
+    }
+
+    return result;
+}
 
 exports.mat4transpose = function (a) {
     let a01 = a[1], a02 = a[2], a03 = a[3];

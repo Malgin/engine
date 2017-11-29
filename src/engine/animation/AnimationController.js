@@ -15,8 +15,13 @@ export default class AnimationController {
   constructor (gameObject) {
     this.gameObject = gameObject;
     this.animatedObjects = [];
+    this.animations = {};
     this.currentTime = 0;
     this.currentFrame = 0;
+    this.isPlaying = false;
+    this.frameStart = 0;
+    this.frameStart = 0;
+    this.animFrameCount = 0;
   }
 
   loadAnimations (animationPath) {
@@ -28,6 +33,13 @@ export default class AnimationController {
     if (this.animatedObjects.length > 0) {
       this.frameCount = this.animatedObjects[0].animationData.frameCount;
       this.fps = this.animatedObjects[0].animationData.fps;
+      this.animEnd = this.frameCount - 1;
+    }
+  }
+
+  addAnimation (name, frameStart, frameEnd) {
+    this.animations[name] = {
+      frameStart, frameEnd
     }
   }
 
@@ -46,14 +58,31 @@ export default class AnimationController {
     }
   }
 
+  play (animationName) {
+    this.isPlaying = true;
+    let animation = this.animations[animationName];
+    this.frameStart = animation.frameStart;
+    this.frameEnd = animation.frameEnd;
+    this.animFrameCount = this.frameEnd - this.frameStart + 1;
+  }
+
   tick (dt) {
+    if (!this.isPlaying) {
+      return;
+    }
+
     this.currentTime += dt;
     let currentFrameFloat = this.currentTime * this.fps;
     let frameProgress = currentFrameFloat - floor(currentFrameFloat);
-    let currentFrame = floor(currentFrameFloat) % this.frameCount;
+    let currentFrame = floor(currentFrameFloat) % this.animFrameCount;
     let nextFrame = currentFrame + 1;
-    if (nextFrame >= this.frameCount) {
-      nextFrame = currentFrame;
+
+    if (nextFrame >= this.animFrameCount) {
+      nextFrame = this.frameStart;
+      currentFrame = this.frameStart;
+    } else {
+      nextFrame += this.frameStart;
+      currentFrame += this.frameStart;
     }
 
     let objects = this.animatedObjects;
