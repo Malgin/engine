@@ -21,21 +21,23 @@ class Resources {
     this.meshes = {};
     this.hierarchy = {};
     this.animations = {};
+    this.skinning = {};
     this.textures = {};
     this.objectTextures = {}; // textures that referenced by the objects
 
     this.animationUrls = {};
+    this.skinningUrls = {};
   }
 
   //------------------------------------------------------------------------
   // Load files
   //------------------------------------------------------------------------
 
-  loadFileList (fileList, loader) {
+  loadFileList (fileList, loader, opts) {
     let promises = [];
 
     for (let i = 0; i < fileList.length; i++) {
-      promises.push(this.loadFile(fileList[i], loader));
+      promises.push(this.loadFile(fileList[i], loader, opts));
     }
 
     return Promise.all(promises);
@@ -49,7 +51,8 @@ class Resources {
 
       oReq.onload = function (oEvent) {
         if (oReq.status === 200) {
-          let result = loader.loadRequestResponse(oReq, { url: file });
+          opts.url = file;
+          let result = loader.loadRequestResponse(oReq, opts);
           resolve(result);
         } else {
           reject(oReq);
@@ -263,6 +266,22 @@ class Resources {
   //------------------------------------------------------------------------
   // Animation
   //------------------------------------------------------------------------
+
+  addSkinnedMeshData (skinnedMeshData, name, url) {
+    let key = url ? `${url}:${name}` : name;
+    if (this.skinning[key]) {
+      throw new Error('Skinning data already exists:' + key);
+    }
+
+    this.skinning[key] = skinnedMeshData;
+    this.animationUrls[url] = true;
+    this.skinningUrls[url] = true;
+  }
+
+  getSkinnedMeshData (name, url) {
+    let key = url ? `${url}:${name}` : name;
+    return this.skinning[key];
+  }
 
   addAnimationData (animationData, name, url) {
     let key = url ? `${url}:${name}` : name;

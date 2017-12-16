@@ -2,6 +2,7 @@ var util = require('util');
 var math = require('./math');
 
 const MODE_TRIANGLES = 'triangles';
+const helperVec = [0, 0, 0];
 
 module.exports = class ColladaGeometry {
 
@@ -243,12 +244,29 @@ module.exports = class ColladaGeometry {
       meshData['WEIGHT'] = true; // Adding WEIGHT key to the geomData to write it into the file
     }
 
-    return {
+    let result = {
       vertices,
       indices,
       indexCount: indices.length,
       vertexCount: vertices.length
     };
+
+    this.postProcessMesh(result, meshData, geomID);
+
+    return result;
+  }
+
+  postProcessMesh (mesh, meshData, geomID) {
+    let vertices = mesh.vertices;
+
+    // Premultiply with bind shape matrix (for skinned meshes)
+    let controller = this.colladaSkinning.controllersGeomID[geomID];
+    if (controller) {
+      for (let i = 0; i < vertices.length; i++) {
+        let position = vertices[i]['POSITION'];
+        math.vec3TransformMat4(position, position, controller.bindShapeMatrix);
+      }
+    }
   }
 
   findVertexIndex (vertices, vertex) {

@@ -14,6 +14,7 @@ import Spring from 'engine/physics/Spring';
 import DebugDraw from 'engine/render/DebugDraw';
 import Material from 'engine/render/Material';
 import GameObject from 'engine/scene/GameObject';
+import SkinObject from './objects/SkinObject';
 
 import { CollisionPrimitive, CollisionPlane } from 'engine/physics/Primitive';
 import { CollisionData, CollisionDetector } from 'engine/physics/CollisionNarrow';
@@ -53,24 +54,23 @@ export default class GameObjectScene extends BaseScene {
     //   }
     // );
 
-    this.animObject = new GameObject();
+    this.animObject = new SkinObject();
     this.scene.addChild(this.animObject);
     this.animObject.loadHierarchy(
-      Resources.getHierarchy('resources/models/anim1.mdl')
+      Resources.getHierarchy('resources/models/skin_cilynder.mdl')
     );
-    quat.fromEuler(this.animObject.transform.rotation, 40, 30, 0) ;
-    this.animObject.transform.position[0] = 1.5;
+    // quat.fromEuler(this.animObject.transform.rotation, 40, 30, 0) ;
+    // this.animObject.transform.position[0] = 1.5;
 
-    this.animObject.animationController.addAnimation('anim1', 0, 54);
-    this.animObject.animationController.addAnimation('anim2', 55, 79);
-    this.animObject.animationController.play('anim2');
+    // this.animObject.animationController.addAnimation('anim1', 0, 54);
+    // this.animObject.animationController.addAnimation('anim2', 55, 79);
+    this.animObject.animationController.play();
 
     this.object2 = new GameObject();
     this.scene.addChild(this.object2);
-    this.object2.loadHierarchy(
-      Resources.getHierarchy('resources/models/textureTest/textured_cube.mdl')
-      // Resources.getHierarchy('resources/models/textureTest/textured_plane.mdl')
-    );
+    // this.object2.loadHierarchy(
+    //   Resources.getHierarchy('resources/models/textureTest/textured_cube.mdl')
+    // );
     this.object2.transform.position[1] = 3;
 
     // this.object2.scale[0] = 0.01;

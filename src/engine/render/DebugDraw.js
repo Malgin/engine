@@ -22,6 +22,12 @@ export default class DebugDraw {
       componentCount: 2
     });
 
+    this.pointsMesh = new Mesh({
+      componentCount: 1
+    });
+
+    this.lineCount = 0;
+    this.pointCount = 0;
     this.vertexCount = 0;
 
     this.vertexData = new Float32Array(MAX_VERTICES * COMPONENT_COUNT);
@@ -35,7 +41,33 @@ export default class DebugDraw {
     this.linesMesh.colorOffsetBytes = VERTEX_COMPONENT_COUNT * 4;
     this.linesMesh.hasColors = true;
     this.linesMesh.hasVertices = true;
+
+    this.pointsMesh.setVBO(this.vbo);
+    this.pointsMesh.strideBytes = COMPONENT_COUNT * 4;
+    this.pointsMesh.colorOffsetBytes = VERTEX_COMPONENT_COUNT * 4;
+    this.pointsMesh.hasColors = true;
+    this.pointsMesh.hasVertices = true;
+
     this.vertexCount = 0;
+  }
+
+  addPoint (p, color) {
+    this.addPointXYZ(p[0], p[1], p[2], color);
+  }
+
+  addPointXYZ (x, y, z, color) {
+    let count = this.vertexCount;
+
+    this.vertexData[count * COMPONENT_COUNT] = x;
+    this.vertexData[count * COMPONENT_COUNT + 1] = y;
+    this.vertexData[count * COMPONENT_COUNT + 2] = z;
+    this.vertexData[count * COMPONENT_COUNT + 3] = color[0];
+    this.vertexData[count * COMPONENT_COUNT + 4] = color[1];
+    this.vertexData[count * COMPONENT_COUNT + 5] = color[2];
+    this.vertexData[count * COMPONENT_COUNT + 6] = 1;
+
+    this.vertexCount += 1;
+    this.pointCount += 1;
   }
 
   addLine (p1, p2, color) {
@@ -56,11 +88,14 @@ export default class DebugDraw {
       count++;
     }
 
+    this.lineCount += 1;
     this.vertexCount = count;
   }
 
   clear () {
     this.vertexCount = 0;
+    this.lineCount = 0;
+    this.pointCount = 0;
   }
 
   updateBuffer () {
@@ -68,7 +103,8 @@ export default class DebugDraw {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertexData, 0, this.vertexCount * COMPONENT_COUNT * 4);
 
-    this.linesMesh.faceCount = floor(this.vertexCount / 2);
+    this.linesMesh.faceCount = this.lineCount;
+    this.pointsMesh.faceCount = this.pointCount;
   }
 
   render () {
@@ -79,8 +115,17 @@ export default class DebugDraw {
     let gl = this.gl;
     gl.disable(gl.DEPTH_TEST);
     this.updateBuffer();
-    this.linesMesh.faceCount = floor(this.vertexCount / 2);
-    this.renderer.renderMesh(this.linesMesh, this.shader, null, this.renderOpts);
+
+    if (this.lineCount) {
+      this.renderOpts.renderMode = gl.LINES;
+      this.renderer.renderMesh(this.linesMesh, this.shader, null, this.renderOpts);
+    }
+
+    if (this.pointCount) {
+      this.renderOpts.renderMode = gl.POINTS;
+      this.renderer.renderMesh(this.pointsMesh, this.shader, null, this.renderOpts);
+    }
+
     this.clear();
   }
 }

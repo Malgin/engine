@@ -38,7 +38,7 @@ export default class ModelLoader {
       stringArr[i] = dataView.getUint8(offset + i);
     }
     offset += len;
-    var encodedString = String.fromCharCode.apply(null, stringArr);
+    let encodedString = String.fromCharCode.apply(null, stringArr);
     let modelData = JSON.parse(encodedString);
     console.info('JSON:', modelData);
 
@@ -64,7 +64,7 @@ export default class ModelLoader {
     let bytesRead = 0;
 
     for (let i = 0; i < geometry.length; i++) {
-      let mesh = new Mesh();
+      let mesh = new Mesh(opts);
       let geomData = geometry[i];
       let { indexCount, vertexCount, attributes, name, caps } = geomData;
 
@@ -98,7 +98,7 @@ export default class ModelLoader {
             mesh.setTexCoord0(attribArray);
             break;
           case ATTRIB_WEIGHT:
-            // mesh.setWeights(attribArray);
+            mesh.setWeights(attribArray);
             break;
         }
       }
@@ -118,9 +118,19 @@ export default class ModelLoader {
     return bytesRead;
   }
 
-  static loadAnimation (animations, dataView, offset, opts) {
+  static loadAnimation (animation, dataView, offset, opts) {
     let bytesRead = 0;
 
+    // Adding skinned mesh data
+    let skinning = animation.skinning;
+    for (let skinObjectName in skinning) {
+      let skinnedObject = skinning[skinObjectName];
+      Resources.addSkinnedMeshData(skinnedObject, skinObjectName, opts.url);
+    }
+
+    let animations = animation.objects;
+
+    // Adding animations for each objects. For skinned mesh it would be joint animations.
     for (let i = 0; i < animations.length; i++) {
       let anim = animations[i];
       let frameData = [];

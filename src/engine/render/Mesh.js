@@ -21,8 +21,9 @@ let deltaUV2 = vec2.create();
 
 const VERTEX_SIZE = 3;
 const NORMAL_SIZE = 3;
-const COLOR_SIZE = 4;
 const TEXCOORD_SIZE = 2;
+const WEIGHT_SIZE = 2 * 3; // 2 components * 3 joints
+const COLOR_SIZE = 4;
 
 export default class Mesh {
 
@@ -53,6 +54,12 @@ export default class Mesh {
     this.texCoord0 = null;
     this.texCoord0Offset = 0;
     this.texCoord0OffsetBytes = 0;
+
+    this.hasWeights = false;
+    this.weights = null;
+    this.weightOffset = 0;
+    this.weightOffsetBytes = 0;
+    this.jointsPerVertex = 3;
 
     this.hasColors = false;
     this.colors = null;
@@ -100,6 +107,11 @@ export default class Mesh {
       this.texCoord0OffsetBytes = currentOffset * 4;
       currentOffset += TEXCOORD_SIZE;
     }
+    if (this.hasWeights) {
+      this.weightOffset = currentOffset;
+      this.weightOffsetBytes = currentOffset * 4;
+      currentOffset += WEIGHT_SIZE;
+    }
     if (this.hasColors) {
       this.colorOffset = currentOffset;
       this.colorOffsetBytes = currentOffset * 4;
@@ -140,6 +152,13 @@ export default class Mesh {
         currentOffset = offset + this.texCoord0Offset;
         bufferData[currentOffset] = this.texCoord0[i * 2];
         bufferData[currentOffset + 1] = this.texCoord0[i * 2 + 1];
+      }
+
+      if (this.hasWeights) {
+        currentOffset = offset + this.weightOffset;
+        for (let j = 0; j < WEIGHT_SIZE; j++) {
+          bufferData[currentOffset + j] = this.texCoord0[i * WEIGHT_SIZE + j];
+        }
       }
 
       if (this.hasColors) {
@@ -357,6 +376,11 @@ export default class Mesh {
     this.tangents = tangents;
     this.bitangents = bitangents;
     this.hasTBN = true;
+  }
+
+  setWeights (weights) {
+    this.weights = weights;
+    this.hasWeights = weights && !!weights.length;
   }
 
 }

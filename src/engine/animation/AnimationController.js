@@ -1,6 +1,9 @@
 import Resources from 'engine/Resources';
 const { floor } = Math;
 import math from 'math';
+import SkinningData from './SkinningData';
+import GameObject from '../scene/GameObject';
+
 const { mat4, vec3, quat } = math;
 
 const position1 = vec3.create();
@@ -12,8 +15,10 @@ const rotation2 = quat.create();
 
 export default class AnimationController {
 
-  constructor (gameObject) {
+  constructor (gameObject, opts) {
     this.gameObject = gameObject;
+    this.isSkinnedMesh = opts.isSkinnedMesh;
+    this.rootJoint = null;
     this.animatedObjects = [];
     this.animations = {};
     this.currentTime = 0;
@@ -28,12 +33,15 @@ export default class AnimationController {
     this.animationPath = animationPath;
     this.animatedObjects.length = 0;
 
+    // this._appendSkinning(this.gameObject.children);
     this._appendAnimationObjects(this.gameObject.children);
 
     if (this.animatedObjects.length > 0) {
       this.frameCount = this.animatedObjects[0].animationData.frameCount;
       this.fps = this.animatedObjects[0].animationData.fps;
       this.animEnd = this.frameCount - 1;
+
+      this.addAnimation('_default', 0, this.animEnd);
     }
   }
 
@@ -43,9 +51,38 @@ export default class AnimationController {
     }
   }
 
+  _appendSkinning (object, skinData) {
+    let boneMap = this._createBones(this.gameObject, skinData.joints);
+    this.skinningData = new SkinningData(boneMap, skinData);
+    console.info('appending skin', object, skinData);
+  }
+
+  _createBones (parent, bone, boneMap = {}) {
+    let boneObject = new GameObject({ name: bone.id });
+    boneObject.transform.setFromMat4(bone.transform);
+    boneMap[bone.id] = {
+      object: boneObject
+    };
+
+    parent.addChild(boneObject);
+    let childCount = bone.children && bone.children.length;
+    for (let i = 0; i < childCount; i++) {
+      this._createBones(boneObject, bone.children[i], boneMap);
+    }
+
+    return boneMap;
+  }
+
   _appendAnimationObjects (list) {
     for (let i = 0; i < list.length; i++) {
       let child = list[i];
+
+      // If child has the skinning data - create bones as child objects
+      let skinning = Resources.getSkinnedMeshData(child.name, this.animationPath);
+      if (skinning) {
+        this._appendSkinning(child, skinning);
+      }
+
       let anim = Resources.getAnimationData(child.name, this.animationPath);
       if (anim) {
         this.animatedObjects.push({
@@ -58,7 +95,7 @@ export default class AnimationController {
     }
   }
 
-  play (animationName) {
+  play (animationName = '_default') {
     this.isPlaying = true;
     let animation = this.animations[animationName];
     this.frameStart = animation.frameStart;

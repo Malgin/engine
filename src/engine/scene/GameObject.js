@@ -122,8 +122,11 @@ export default class GameObject {
       }
     }
 
-    if (depth === 0 && !skipAnimation && Resources.animationUrls[this.url]) {
-      this.animationController = new AnimationController(this);
+    let isSkinnedMesh = !!Resources.skinningUrls[this.url];
+    let hasAnimation = depth === 0 && !skipAnimation && Resources.animationUrls[this.url];
+
+    if (hasAnimation) {
+      this.animationController = new AnimationController(this, { isSkinnedMesh });
       this.animationController.loadAnimations(this.url);
     }
   }

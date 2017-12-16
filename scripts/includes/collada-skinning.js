@@ -37,7 +37,7 @@ module.exports = class ColladaSkinning {
     }
 
     let geometryID = skin.$.source.slice(1);
-    let bindShapeMatrix = math.getMatrix4(skin.bind_shape_matrix[0]);
+    controllerData.bindShapeMatrix = math.getMatrix4(skin.bind_shape_matrix[0]);
 
     let sourceMap = this.getSourceMap(skin.source);
     let inputsTotal = skin.joints[0].input.concat(skin.vertex_weights[0].input);
