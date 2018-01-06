@@ -92,7 +92,7 @@ export default class ModelLoader {
             mesh.setVertices(attribArray);
             break;
           case ATTRIB_NORMAL:
-            mesh.setNormals(attribArray);
+            // mesh.setNormals(attribArray);
             break;
           case ATTRIB_TEXCOORD0:
             mesh.setTexCoord0(attribArray);

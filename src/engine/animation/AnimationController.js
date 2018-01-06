@@ -27,13 +27,16 @@ export default class AnimationController {
     this.frameStart = 0;
     this.frameStart = 0;
     this.animFrameCount = 0;
+
+    this.gameObject.loopHierarchy((child) => {
+      child.animationController = this;
+    });
   }
 
   loadAnimations (animationPath) {
     this.animationPath = animationPath;
     this.animatedObjects.length = 0;
 
-    // this._appendSkinning(this.gameObject.children);
     this._appendAnimationObjects(this.gameObject.children);
 
     if (this.animatedObjects.length > 0) {
@@ -58,9 +61,9 @@ export default class AnimationController {
   }
 
   _createBones (parent, bone, boneMap = {}) {
-    let boneObject = new GameObject({ name: bone.id });
+    let boneObject = new GameObject({ name: bone.name });
     boneObject.transform.setFromMat4(bone.transform);
-    boneMap[bone.id] = {
+    boneMap[bone.name] = {
       object: boneObject
     };
 
@@ -111,7 +114,7 @@ export default class AnimationController {
     this.currentTime += dt;
     let currentFrameFloat = this.currentTime * this.fps;
     let frameProgress = currentFrameFloat - floor(currentFrameFloat);
-    let currentFrame = floor(currentFrameFloat) % this.animFrameCount;
+    let currentFrame = floor(currentFrameFloat) % (this.animFrameCount);
     let nextFrame = currentFrame + 1;
 
     if (nextFrame >= this.animFrameCount) {
@@ -142,12 +145,14 @@ export default class AnimationController {
     if (animationData.hasRotation) {
       animationData.getRotation(rotation1, frame1);
       animationData.getRotation(rotation2, frame2);
+
       quat.slerp(transform._rotation, rotation1, rotation2, progress);
+      quat.normalize(transform._rotation, transform._rotation);
     }
     if (animationData.hasScale) {
       animationData.getScale(scale1, frame1);
       animationData.getScale(scale2, frame2);
-      vec3.lerp(transform._scale, position1, position2, progress);
+      vec3.lerp(transform._scale, scale1, scale2, progress);
     }
   }
 

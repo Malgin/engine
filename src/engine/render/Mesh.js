@@ -19,10 +19,14 @@ let uvC = vec2.create();
 let deltaUV1 = vec2.create();
 let deltaUV2 = vec2.create();
 
+const JOINT_PER_VERTEX_MAX = 3;
+const JOINTS_MAX = 30;
+
 const VERTEX_SIZE = 3;
 const NORMAL_SIZE = 3;
 const TEXCOORD_SIZE = 2;
-const WEIGHT_SIZE = 2 * 3; // 2 components * 3 joints
+const JOINT_INDEX_SIZE = JOINT_PER_VERTEX_MAX;
+const WEIGHT_SIZE = JOINT_PER_VERTEX_MAX;
 const COLOR_SIZE = 4;
 
 export default class Mesh {
@@ -57,9 +61,11 @@ export default class Mesh {
 
     this.hasWeights = false;
     this.weights = null;
+    this.jointIndexOffset = 0;
+    this.jointIndexOffsetBytes = 0;
     this.weightOffset = 0;
     this.weightOffsetBytes = 0;
-    this.jointsPerVertex = 3;
+    this.jointsPerVertex = JOINT_PER_VERTEX_MAX;
 
     this.hasColors = false;
     this.colors = null;
@@ -111,6 +117,10 @@ export default class Mesh {
       this.weightOffset = currentOffset;
       this.weightOffsetBytes = currentOffset * 4;
       currentOffset += WEIGHT_SIZE;
+
+      this.jointIndexOffset = currentOffset;
+      this.jointIndexOffsetBytes = currentOffset * 4;
+      currentOffset += JOINT_INDEX_SIZE;
     }
     if (this.hasColors) {
       this.colorOffset = currentOffset;
@@ -155,9 +165,14 @@ export default class Mesh {
       }
 
       if (this.hasWeights) {
+        currentOffset = offset + this.jointIndexOffset;
+        for (let j = 0; j < JOINT_INDEX_SIZE; j++) {
+          bufferData[currentOffset + j] = this.jointIndexes[i * JOINT_INDEX_SIZE + j];
+        }
+
         currentOffset = offset + this.weightOffset;
         for (let j = 0; j < WEIGHT_SIZE; j++) {
-          bufferData[currentOffset + j] = this.texCoord0[i * WEIGHT_SIZE + j];
+          bufferData[currentOffset + j] = this.weights[i * WEIGHT_SIZE + j];
         }
       }
 
@@ -188,6 +203,8 @@ export default class Mesh {
       this.tangents = null;
       this.bitangents = null;
       this.texCoord0 = null;
+      this.weights = null;
+      this.jointIndexes = null;
       this.colors = null;
       this.indices = null;
     }
@@ -200,6 +217,7 @@ export default class Mesh {
     if (this.hasTBN) result += NORMAL_SIZE * 2;
     if (this.hasColors) result += COLOR_SIZE;
     if (this.hasTexCoord0) result += TEXCOORD_SIZE;
+    if (this.hasWeights) result += JOINT_INDEX_SIZE + WEIGHT_SIZE;
     return result;
   }
 
@@ -379,8 +397,16 @@ export default class Mesh {
   }
 
   setWeights (weights) {
-    this.weights = weights;
+    this.weights = [];
+    this.jointIndexes = [];
     this.hasWeights = weights && !!weights.length;
+
+    if (this.hasWeights) {
+      for (let i = 0; i < weights.length / 2; i++) {
+        this.jointIndexes[i] = weights[i * 2];
+        this.weights[i] = weights[i * 2 + 1];
+      }
+    }
   }
 
 }

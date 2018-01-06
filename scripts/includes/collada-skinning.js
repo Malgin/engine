@@ -53,7 +53,6 @@ module.exports = class ColladaSkinning {
       if (semantic === SOURCE_JOINT && !controllerData.jointNames) {
         let joints = sourceData.Name_array[0]._.split(' ');
         controllerData.jointNames = joints;
-        controllerData.firstJointName = joints[0];
       }
 
       if (semantic === SOURCE_INV_BIND_MATRIX && !controllerData.bindPoses) {

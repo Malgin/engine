@@ -50,10 +50,16 @@ module.exports = {
         from: 'resources/**/*.mdl', // copy models into resources folder
         to: '.'
       }]),
-    new CopyWebpackPlugin([{
-      from: 'resources/**/*.jpg',
-      to: '.'
-    }])
+    new CopyWebpackPlugin([
+      {
+        from: 'resources/**/*.jpg',
+        to: '.'
+      },
+      {
+        from: 'resources/**/*.png',
+        to: '.'
+      }
+    ])
   ],
   output: {
     filename: 'bundle.js',

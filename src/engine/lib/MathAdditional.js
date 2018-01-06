@@ -1,6 +1,7 @@
 import math from './gl-matrix.js';
 const { vec3, mat4, mat3, quat } = math;
 
+let helperVec = vec3.create();
 let helperQuat = quat.create();
 
 /**
@@ -80,4 +81,26 @@ mat3.getAxis = function (out, m, axis) {
   out[0] = m[axis * 3];
   out[1] = m[axis * 3 + 1];
   out[2] = m[axis * 3 + 2];
+}
+
+mat4.normalizeAxes = function (out, m) {
+  mat4.copy(out, m);
+
+  vec3.set(helperVec, m[0], m[1], m[2]);
+  vec3.normalize(helperVec, helperVec);
+  out[0] = helperVec[0];
+  out[1] = helperVec[1];
+  out[2] = helperVec[2];
+
+  vec3.set(helperVec, m[4], m[5], m[6]);
+  vec3.normalize(helperVec, helperVec);
+  out[4] = helperVec[0];
+  out[5] = helperVec[1];
+  out[6] = helperVec[2];
+
+  vec3.set(helperVec, m[8], m[9], m[10]);
+  vec3.normalize(helperVec, helperVec);
+  out[8] = helperVec[0];
+  out[9] = helperVec[1];
+  out[10] = helperVec[2];
 }

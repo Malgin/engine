@@ -55,6 +55,16 @@ export default class GameObject {
     this.children.push(gameObject);
   }
 
+  loopHierarchy (iteratorFunction, depth = 0, skipSelf = true) {
+    if (!skipSelf) {
+      iteratorFunction(this);
+    }
+
+    for (let i = 0; i < this.children.length; i++) {
+      this.children[i].loopHierarchy(iteratorFunction, depth + 1, false);
+    }
+  }
+
   //------------------------------------------------------------------------
   // Loading
   //------------------------------------------------------------------------
@@ -113,21 +123,30 @@ export default class GameObject {
       this.material = material;
     }
 
+    let isSkinnedMesh = !!Resources.skinningUrls[this.url];
+    let hasAnimation = depth === 0 && !skipAnimation && Resources.animationUrls[this.url];
+
     if (hierarchy.children) {
       for (let i = 0; i < hierarchy.children.length; i++) {
-        let child = new GameObject();
+        let child = this.createChildObject(hasAnimation, isSkinnedMesh, depth);
         child.url = this.url;
         this.addChild(child);
         child.loadHierarchy(hierarchy.children[i], opts, depth + 1);
       }
     }
 
-    let isSkinnedMesh = !!Resources.skinningUrls[this.url];
-    let hasAnimation = depth === 0 && !skipAnimation && Resources.animationUrls[this.url];
-
     if (hasAnimation) {
       this.animationController = new AnimationController(this, { isSkinnedMesh });
       this.animationController.loadAnimations(this.url);
+    }
+  }
+
+  createChildObject (hasAnimation, isSkinnedMesh, depth) {
+    if (isSkinnedMesh) {
+      let SkinObject = require('engine/animation/SkinObject').default;
+      return new SkinObject();
+    } else {
+      return new GameObject();
     }
   }
 

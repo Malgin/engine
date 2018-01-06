@@ -4,7 +4,7 @@ import Mesh from 'engine/render/Mesh';
 const { vec3 } = math;
 const { floor } = Math;
 
-const MAX_VERTICES = 1000;
+const MAX_VERTICES = 10000;
 const VERTEX_COMPONENT_COUNT = 3;
 const COLOR_COMPONENT_COUNT = 4;
 const COMPONENT_COUNT = VERTEX_COMPONENT_COUNT + COLOR_COMPONENT_COUNT;

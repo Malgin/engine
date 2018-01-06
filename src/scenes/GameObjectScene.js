@@ -14,7 +14,6 @@ import Spring from 'engine/physics/Spring';
 import DebugDraw from 'engine/render/DebugDraw';
 import Material from 'engine/render/Material';
 import GameObject from 'engine/scene/GameObject';
-import SkinObject from './objects/SkinObject';
 
 import { CollisionPrimitive, CollisionPlane } from 'engine/physics/Primitive';
 import { CollisionData, CollisionDetector } from 'engine/physics/CollisionNarrow';
@@ -54,11 +53,16 @@ export default class GameObjectScene extends BaseScene {
     //   }
     // );
 
-    this.animObject = new SkinObject();
+    this.animObject = new GameObject();
     this.scene.addChild(this.animObject);
     this.animObject.loadHierarchy(
-      Resources.getHierarchy('resources/models/skin_cilynder.mdl')
+      // Resources.getHierarchy('resources/models/girl.mdl')
+      // Resources.getHierarchy('resources/models/skin_cilynder.mdl')
+      Resources.getHierarchy('resources/models/soldier.mdl')
     );
+    this.animObject.transform.scale[0] = 0.01;
+    this.animObject.transform.scale[1] = 0.01;
+    this.animObject.transform.scale[2] = 0.01;
     // quat.fromEuler(this.animObject.transform.rotation, 40, 30, 0) ;
     // this.animObject.transform.position[0] = 1.5;
 
@@ -145,10 +149,10 @@ export default class GameObjectScene extends BaseScene {
     let input = app.instance.input;
 
     if (input.keyDown('C'.charCodeAt(0))) {
-      quat.rotateX(this.object2.transform.rotation, this.object2.transform.rotation, Math.PI * dt);
+      quat.rotateX(this.animObject.transform.rotation, this.animObject.transform.rotation, Math.PI * dt);
     }
     if (input.keyDown('X'.charCodeAt(0))) {
-      quat.rotateY(this.object2.transform.rotation, this.object2.transform.rotation, Math.PI * dt);
+      quat.rotateY(this.animObject.transform.rotation, this.animObject.transform.rotation, Math.PI * dt);
     }
 
   }

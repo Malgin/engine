@@ -17,6 +17,7 @@ const UNIFORM_TEXTURE0 = Shader.UNIFORM_TEXTURE0;
 const UNIFORM_TEXTURE1 = Shader.UNIFORM_TEXTURE1;
 const UNIFORM_NORMAL_MAP = Shader.UNIFORM_NORMAL_MAP;
 const UNIFORM_NORMAL_MATRIX = Shader.UNIFORM_NORMAL_MATRIX;
+const UNIFORM_JOINT_TRANSFORMS = Shader.UNIFORM_JOINT_TRANSFORMS;
 
 const ATTRIBUTE_POSITION = Shader.ATTRIBUTE_POSITION;
 const ATTRIBUTE_NORMAL = Shader.ATTRIBUTE_NORMAL;
@@ -25,6 +26,10 @@ const ATTRIBUTE_BITANGENT = Shader.ATTRIBUTE_BITANGENT;
 const ATTRIBUTE_TEXCOORD0 = Shader.ATTRIBUTE_TEXCOORD0;
 const ATTRIBUTE_TEXCOORD1 = Shader.ATTRIBUTE_TEXCOORD1;
 const ATTRIBUTE_COLOR = Shader.ATTRIBUTE_COLOR;
+const ATTRIBUTE_JOINT_WEIGHTS = Shader.ATTRIBUTE_JOINT_WEIGHTS;
+const ATTRIBUTE_JOINT_INDEXES = Shader.ATTRIBUTE_JOINT_INDEXES;
+
+const MAX_JOINTS = 60;
 
 export default class Renderer {
 
@@ -37,6 +42,7 @@ export default class Renderer {
     this.projectionMatrix = mat4.create();
     this.lightDir = vec3.fromValues(-1, -1, -1);
     this.renderOps = [];
+    this.jointTransforms = new Float32Array(16 * MAX_JOINTS);
   }
 
   render () {
@@ -95,6 +101,18 @@ export default class Renderer {
     mat4.copy(this.projectionMatrix, projection);
   }
 
+  setJointTransforms (transformList) {
+    let jointTransforms = this.jointTransforms;
+
+    for (let i = 0; i < transformList.length; i++) {
+      for (let j = 0; j < 16; j++) {
+        jointTransforms[i * 16 + j] = transformList[i][j];
+      }
+    }
+
+    return jointTransforms;
+  }
+
   renderMesh (mesh, shader, transform, renderOpts) {
     if (!mesh.hasVertices) {
       console.error('Mesh data incomplete');
@@ -134,6 +152,7 @@ export default class Renderer {
     shader.use();
     shader.setUniformMat4(UNIFORM_PROJECTION_MATRIX, this.projectionMatrix);
     shader.setUniformMat4(UNIFORM_MODELVIEW_MATRIX, modelViewMatrix);
+    // TODO: add conditions for shader support of these features
     shader.setUniformMat4(UNIFORM_VIEW_MATRIX, this.viewMatrix);
 
     let currentTexture = 0;
@@ -179,6 +198,7 @@ export default class Renderer {
       gl.vertexAttribPointer(ATTRIBUTE_NORMAL, 3, gl.FLOAT, false, stride, mesh.normalOffsetBytes);
     }
 
+    // TBN
     if (mesh.hasTBN) {
       // Tangents
       gl.enableVertexAttribArray(ATTRIBUTE_TANGENT);
@@ -186,6 +206,21 @@ export default class Renderer {
       // Bitangents
       gl.enableVertexAttribArray(ATTRIBUTE_BITANGENT);
       gl.vertexAttribPointer(ATTRIBUTE_BITANGENT, 3, gl.FLOAT, false, stride, mesh.bitangentOffsetBytes);
+    }
+
+    // Joint transforms
+    if (renderOpts.jointTransforms) {
+      let jointTransforms = this.setJointTransforms(renderOpts.jointTransforms);
+      shader.setUniformMat4(UNIFORM_JOINT_TRANSFORMS, jointTransforms);
+    }
+
+    // Joint weights
+    if (mesh.hasWeights) {
+      gl.enableVertexAttribArray(ATTRIBUTE_JOINT_WEIGHTS);
+      gl.vertexAttribPointer(ATTRIBUTE_JOINT_WEIGHTS, 3, gl.FLOAT, false, stride, mesh.weightOffsetBytes);
+
+      gl.enableVertexAttribArray(ATTRIBUTE_JOINT_INDEXES);
+      gl.vertexAttribPointer(ATTRIBUTE_JOINT_INDEXES, 3, gl.FLOAT, false, stride, mesh.jointIndexOffsetBytes);
     }
 
     // Colors

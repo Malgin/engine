@@ -101,7 +101,7 @@ class ColladaConvert {
         }
       }
 
-      console.log('data', util.inspect(jsonData, false, null));
+      // console.log('data', util.inspect(jsonData, false, null));
 
       let jsonString = JSON.stringify(jsonData);
       let jsonLength = Buffer.byteLength(jsonString);

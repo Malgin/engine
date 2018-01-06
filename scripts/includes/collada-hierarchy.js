@@ -7,6 +7,7 @@ const EXPORT_MATRIX = false;
 module.exports = class ColladaHierarchy {
 
   constructor (root, material, geometry, skinning, animation, opts = {}) {
+    this.opts = opts;
     this.colladaGeometry = geometry;
     this.colladaMaterial = material;
     this.colladaSkinning = skinning;
@@ -24,8 +25,8 @@ module.exports = class ColladaHierarchy {
 
     this.appendJointsToAnimation();
 
-    console.info('Obj sk', this.objectsWithSkinning);
-    console.info('Jnts', this.jointHierarchies);
+    // console.info('Obj sk', this.objectsWithSkinning);
+    // console.info('Jnts', this.jointHierarchies);
   }
 
   buildObjectHierarchy (object, data) {
@@ -39,7 +40,7 @@ module.exports = class ColladaHierarchy {
     object.name = data.$.name;
     object.transform = this.getObjectTransform(data);
     object.geometry = this.getObjectGeometryID(data);
-    let materialID = this.getObjectMaterialID(data);
+    let materialID = this.opts.includeMaterial && this.getObjectMaterialID(data);
     object.material = this.colladaMaterial.getMaterial(materialID);
 
     let skinningController = data.instance_controller && data.instance_controller[0];
@@ -77,7 +78,7 @@ module.exports = class ColladaHierarchy {
   addJoint (data) {
     let joint = {};
     this.buildJointHierarchy(joint, data);
-    let key = joint.id;
+    let key = joint.name;
 
     if (this.jointHierarchies[key]) {
       throw new Error('Joint ID already exists: ' + key);
@@ -93,7 +94,10 @@ module.exports = class ColladaHierarchy {
     }
 
     joint.id = data.$.id;
+    joint.name = data.$.name;
     joint.transform = this.getObjectTransform(data);
+
+    this.idToNameMap[joint.id] = joint.name;
 
     let jointChildren = data.node;
     if (jointChildren) {
@@ -108,6 +112,8 @@ module.exports = class ColladaHierarchy {
   }
 
   appendJointsToAnimation () {
+    this.setupControllersFirstJoint();
+
     for (let i = 0; i < this.objectsWithSkinning.length; i++) {
       let { object, controllerData } = this.objectsWithSkinning[i];
       let skinningData = {
@@ -116,7 +122,19 @@ module.exports = class ColladaHierarchy {
         joints: this.jointHierarchies[controllerData.firstJointName]
       };
 
-      this.colladaAnimation.addSkinningData(object.id, skinningData);
+      this.colladaAnimation.addSkinningData(object.name, skinningData);
+    }
+  }
+
+  setupControllersFirstJoint () {
+    for (let i = 0; i < this.objectsWithSkinning.length; i++) {
+      let { controllerData } = this.objectsWithSkinning[i];
+      for (let key in this.jointHierarchies) {
+        if (controllerData.jointNames.indexOf(key) !== -1) {
+          controllerData.firstJointName = key;
+          break;
+        }
+      }
     }
   }
 

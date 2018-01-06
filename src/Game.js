@@ -24,9 +24,11 @@ export default class Game extends Application {
   loadModels () {
     return Resources.loadFileList([
       // 'resources/models/group.mdl',
-      'resources/models/textureTest/textured_cube.mdl',
+      // 'resources/models/textureTest/textured_cube.mdl',
       'resources/models/skin_cilynder.mdl',
-      // 'resources/models/anim1.mdl',
+      'resources/models/girl.mdl',
+      'resources/models/girl_my.mdl',
+      'resources/models/soldier.mdl',
       // 'resources/models/textureTest/textured_plane.mdl'
     ], ModelLoader, { keepData: true });
   }

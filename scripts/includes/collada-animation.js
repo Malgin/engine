@@ -38,6 +38,7 @@ module.exports = class ColladaAnimation {
       let animationData = this.getAnimationForObject(objectName);
       animationData.name = idToName[objectName] || objectName;
       result.push(animationData);
+
       return result;
     }, []);
 
@@ -84,7 +85,7 @@ module.exports = class ColladaAnimation {
           duration, fps
         };
 
-        this.addPosRotScale(transforms.array, animation);
+        this.addPosRotScale(transforms.array, animation, animationID);
 
         let animTarget = channel.target;
 
@@ -126,7 +127,7 @@ module.exports = class ColladaAnimation {
     }
   }
 
-  addPosRotScale (matrixArray, animation) {
+  addPosRotScale (matrixArray, animation, animationID) {
     let position = [];
     let rotation = [];
     let scale = [];
@@ -149,8 +150,9 @@ module.exports = class ColladaAnimation {
       matrixList.push(matrix);
       Array.prototype.push.apply(matrices, matrix);
       let pos = math.getMat4Translation(matrix);
-      let rot = math.getMat4Rotation(matrix);
       let s = math.getMat4Scaling(matrix);
+      math.normalizeAxes(matrix);
+      let rot = math.getMat4Rotation(matrix);
       scaleList.push(s);
 
       Array.prototype.push.apply(position, pos);

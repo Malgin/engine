@@ -1,3 +1,4 @@
+let helperVec = [0, 0, 0];
 
 exports.getMatrix4 = function (data) {
     let matrix = Array.isArray(data) ? data : data.split(' ');
@@ -143,6 +144,35 @@ exports.getMat4Scaling = function (mat) {
     out[2] = Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33);
 
     return out;
+}
+
+exports.normalizeVec3 = function (v) {
+    let len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    v[0] /= len;
+    v[1] /= len;
+    v[2] /= len;
+}
+
+exports.normalizeAxes = function (m) {
+    let out = m;
+
+    helperVec[0] = m[0]; helperVec[1] = m[1]; helperVec[2] = m[2];
+    this.normalizeVec3(helperVec);
+    out[0] = helperVec[0];
+    out[1] = helperVec[1];
+    out[2] = helperVec[2];
+
+    helperVec[0] = m[4]; helperVec[1] = m[5]; helperVec[2] = m[6];
+    this.normalizeVec3(helperVec);
+    out[4] = helperVec[0];
+    out[5] = helperVec[1];
+    out[6] = helperVec[2];
+
+    helperVec[0] = m[8]; helperVec[1] = m[9]; helperVec[2] = m[10];
+    this.normalizeVec3(helperVec);
+    out[8] = helperVec[0];
+    out[9] = helperVec[1];
+    out[10] = helperVec[2];
 }
 
 exports.compare = function (arr1, arr2) {
