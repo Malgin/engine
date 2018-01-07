@@ -259,6 +259,19 @@ module.exports = class ColladaGeometry {
   postProcessMesh (mesh, meshData, geomID) {
     let vertices = mesh.vertices;
 
+    // Flip UV.y
+    for (let i = 0; i < vertices.length; i++) {
+      let texcoord = vertices[i]['TEXCOORD0'];
+      if (texcoord) {
+        texcoord[1] = 1 - texcoord[1];
+      }
+
+      texcoord = vertices[i]['TEXCOORD1'];
+      if (texcoord) {
+        texcoord[1] = 1 - texcoord[1];
+      }
+    }
+
     // Premultiply with bind shape matrix (for skinned meshes)
     let controller = this.colladaSkinning.controllersGeomID[geomID];
     if (controller) {

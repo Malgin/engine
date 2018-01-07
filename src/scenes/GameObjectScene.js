@@ -56,9 +56,9 @@ export default class GameObjectScene extends BaseScene {
     this.animObject = new GameObject();
     this.scene.addChild(this.animObject);
     this.animObject.loadHierarchy(
-      // Resources.getHierarchy('resources/models/girl.mdl')
+      Resources.getHierarchy('resources/models/girl.mdl')
       // Resources.getHierarchy('resources/models/skin_cilynder.mdl')
-      Resources.getHierarchy('resources/models/soldier.mdl')
+      // Resources.getHierarchy('resources/models/soldier.mdl')
     );
     this.animObject.transform.scale[0] = 0.01;
     this.animObject.transform.scale[1] = 0.01;

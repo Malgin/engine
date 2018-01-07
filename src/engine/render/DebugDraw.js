@@ -8,6 +8,7 @@ const MAX_VERTICES = 10000;
 const VERTEX_COMPONENT_COUNT = 3;
 const COLOR_COMPONENT_COUNT = 4;
 const COMPONENT_COUNT = VERTEX_COMPONENT_COUNT + COLOR_COMPONENT_COUNT;
+const DEFAULT_POINT_SIZE = 4;
 
 export default class DebugDraw {
 
@@ -28,45 +29,51 @@ export default class DebugDraw {
 
     this.lineCount = 0;
     this.pointCount = 0;
-    this.vertexCount = 0;
+    this.pointVertexCount = 0;
 
-    this.vertexData = new Float32Array(MAX_VERTICES * COMPONENT_COUNT);
+    this.pointVertexData = new Float32Array(MAX_VERTICES * COMPONENT_COUNT);
+    this.lineVertexData = new Float32Array(MAX_VERTICES * COMPONENT_COUNT);
 
-    this.vbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.DYNAMIC_DRAW);
+    this.pointVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.pointVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, this.pointVertexData, gl.DYNAMIC_DRAW);
 
-    this.linesMesh.setVBO(this.vbo);
+    this.linesVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.linesVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, this.lineVertexData, gl.DYNAMIC_DRAW);
+
+    this.linesMesh.setVBO(this.linesVbo);
     this.linesMesh.strideBytes = COMPONENT_COUNT * 4;
     this.linesMesh.colorOffsetBytes = VERTEX_COMPONENT_COUNT * 4;
     this.linesMesh.hasColors = true;
     this.linesMesh.hasVertices = true;
+    this.lineVertexCount = 0;
 
-    this.pointsMesh.setVBO(this.vbo);
+    this.pointsMesh.setVBO(this.pointVbo);
     this.pointsMesh.strideBytes = COMPONENT_COUNT * 4;
     this.pointsMesh.colorOffsetBytes = VERTEX_COMPONENT_COUNT * 4;
     this.pointsMesh.hasColors = true;
     this.pointsMesh.hasVertices = true;
 
-    this.vertexCount = 0;
+    this.pointVertexCount = 0;
   }
 
-  addPoint (p, color) {
-    this.addPointXYZ(p[0], p[1], p[2], color);
+  addPoint (p, color, size = DEFAULT_POINT_SIZE) {
+    this.addPointXYZ(p[0], p[1], p[2], color, size);
   }
 
-  addPointXYZ (x, y, z, color) {
-    let count = this.vertexCount;
+  addPointXYZ (x, y, z, color, size = DEFAULT_POINT_SIZE) {
+    let count = this.pointVertexCount;
 
-    this.vertexData[count * COMPONENT_COUNT] = x;
-    this.vertexData[count * COMPONENT_COUNT + 1] = y;
-    this.vertexData[count * COMPONENT_COUNT + 2] = z;
-    this.vertexData[count * COMPONENT_COUNT + 3] = color[0];
-    this.vertexData[count * COMPONENT_COUNT + 4] = color[1];
-    this.vertexData[count * COMPONENT_COUNT + 5] = color[2];
-    this.vertexData[count * COMPONENT_COUNT + 6] = 1;
+    this.pointVertexData[count * COMPONENT_COUNT] = x;
+    this.pointVertexData[count * COMPONENT_COUNT + 1] = y;
+    this.pointVertexData[count * COMPONENT_COUNT + 2] = z;
+    this.pointVertexData[count * COMPONENT_COUNT + 3] = color[0];
+    this.pointVertexData[count * COMPONENT_COUNT + 4] = color[1];
+    this.pointVertexData[count * COMPONENT_COUNT + 5] = color[2];
+    this.pointVertexData[count * COMPONENT_COUNT + 6] = size;
 
-    this.vertexCount += 1;
+    this.pointVertexCount += 1;
     this.pointCount += 1;
   }
 
@@ -75,43 +82,48 @@ export default class DebugDraw {
   }
 
   addLineXYZ(x1, y1, z1, x2, y2, z2, color) {
-    let count = this.vertexCount;
+    let count = this.lineVertexCount;
 
     for (let i = 0; i < 2; i++) {
-      this.vertexData[count * COMPONENT_COUNT] = arguments[i * VERTEX_COMPONENT_COUNT];
-      this.vertexData[count * COMPONENT_COUNT + 1] = arguments[i * VERTEX_COMPONENT_COUNT + 1];
-      this.vertexData[count * COMPONENT_COUNT + 2] = arguments[i * VERTEX_COMPONENT_COUNT + 2];
-      this.vertexData[count * COMPONENT_COUNT + 3] = color[0];
-      this.vertexData[count * COMPONENT_COUNT + 4] = color[1];
-      this.vertexData[count * COMPONENT_COUNT + 5] = color[2];
-      this.vertexData[count * COMPONENT_COUNT + 6] = 1;
+      this.lineVertexData[count * COMPONENT_COUNT] = arguments[i * VERTEX_COMPONENT_COUNT];
+      this.lineVertexData[count * COMPONENT_COUNT + 1] = arguments[i * VERTEX_COMPONENT_COUNT + 1];
+      this.lineVertexData[count * COMPONENT_COUNT + 2] = arguments[i * VERTEX_COMPONENT_COUNT + 2];
+      this.lineVertexData[count * COMPONENT_COUNT + 3] = color[0];
+      this.lineVertexData[count * COMPONENT_COUNT + 4] = color[1];
+      this.lineVertexData[count * COMPONENT_COUNT + 5] = color[2];
+      this.lineVertexData[count * COMPONENT_COUNT + 6] = 1;
       count++;
     }
 
     this.lineCount += 1;
-    this.vertexCount = count;
+    this.lineVertexCount = count;
   }
 
   clear () {
-    this.vertexCount = 0;
+    this.pointVertexCount = 0;
+    this.lineVertexCount = 0;
     this.lineCount = 0;
     this.pointCount = 0;
   }
 
   updateBuffer () {
     let gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertexData, 0, this.vertexCount * COMPONENT_COUNT * 4);
 
-    this.linesMesh.faceCount = this.lineCount;
-    this.pointsMesh.faceCount = this.pointCount;
+    if (this.pointVertexCount > 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.pointVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.pointVertexData, 0, this.pointVertexCount * COMPONENT_COUNT * 4);
+      this.pointsMesh.faceCount = this.pointCount;
+    }
+
+    if (this.lineVertexCount > 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.linesVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.lineVertexData, 0, this.lineVertexCount * COMPONENT_COUNT * 4);
+      this.linesMesh.faceCount = this.lineCount;
+    }
+
   }
 
   render () {
-    if (this.vertexCount === 0) {
-      return;
-    }
-
     let gl = this.gl;
     gl.disable(gl.DEPTH_TEST);
     this.updateBuffer();

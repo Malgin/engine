@@ -51,6 +51,7 @@ export default class GameObject {
     }
 
     gameObject.removeFromParent();
+    gameObject.parent = this;
 
     this.children.push(gameObject);
   }

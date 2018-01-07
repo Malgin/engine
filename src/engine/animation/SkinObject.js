@@ -2,6 +2,8 @@ import GameObject from 'engine/scene/GameObject';
 import app from 'engine/Application';
 import math from 'math';
 import Resources from 'engine/Resources';
+import DebugDraw from 'engine/render/DebugDraw';
+
 const { vec3, vec4, mat4 } = math;
 const { floor } = Math;
 
@@ -10,6 +12,7 @@ let helperVec4 = vec4.create();
 let helperNormalVec = vec4.create();
 let normal = vec3.create();
 let position = vec3.create();
+let position2 = vec3.create();
 let helperMat4 = mat4.create();
 
 const JOINT_KNEE_LEFT = 14;
@@ -32,6 +35,31 @@ export default class SkinObject extends GameObject {
     this.blue = [0, 0, 1];
   }
 
+  drawJointsDebug () {
+
+    function drawRecursively (gameObject, debugDraw, skip = false) {
+      let children = gameObject.children;
+      mat4.getTranslation(position, gameObject.transform.worldTransform);
+
+      if (!skip) {
+        debugDraw.addPoint(position, DebugDraw.GREEN);
+
+        for (let i = 0; i < gameObject.children.length; i++) {
+          let child = gameObject.children[i];
+          mat4.getTranslation(position2, child.transform.worldTransform);
+          debugDraw.addLine(position, position2, DebugDraw.RED);
+        }
+      }
+
+      for (let i = 0; i < gameObject.children.length; i++) {
+        let child = gameObject.children[i];
+        drawRecursively(child, debugDraw);
+      }
+    }
+
+    drawRecursively(this.animationController.rootJoint, this.debugDraw);
+  }
+
   updateMatrixList () {
     let skinData = this.animationController.skinningData;
 
@@ -48,22 +76,7 @@ export default class SkinObject extends GameObject {
         this.boneMatrices[i] = mat4.create();
       }
 
-      let bone = boneList[i].object;
-      mat4.getTranslation(helperVec, bone.transform.worldTransform);
-      this.debugDraw.addPoint(helperVec, this.green);
-
       mat4.multiply(this.boneMatrices[i], boneList[i].object.transform.worldTransform, bindPoses[i]);
-
-      // let logData = [0,0,0];
-
-      // if (i === JOINT_KNEE_LEFT) {
-      //   mat4.getScaling(logData, bindPoses[i]);
-      //   console.info('BROKEN BIND', logData);
-      // }
-      // if (i === JOINT_KNEE_RIGHT) {
-      //   mat4.getScaling(logData, bindPoses[i]);
-      //   console.info('NORMAL BIND', logData);
-      // }
     }
   }
 
@@ -129,7 +142,7 @@ export default class SkinObject extends GameObject {
       // vec3.scale(normal, normal, 0.5);
       // vec3.add(normal, position, normal);
 
-      // shouldDraw && this.debugDraw.addPoint(position, [weight, 0.05, 0.05]);
+      // shouldDraw && this.debugDraw.addPoint(position, [1, 0.05, 0.05]);
       // this.debugDraw.addLine(position, normal, this.red);
     }
 
@@ -144,6 +157,8 @@ export default class SkinObject extends GameObject {
     //   let z = this.newVertices[i * 3 + 2];
     //   this.debugDraw.addPointXYZ(x, y, z, this.red);
     // }
+
+    // this.drawJointsDebug();
 
     renderOp.mesh = this.mesh;
     renderOp.material = this.material || this.tempMaterial;

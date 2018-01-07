@@ -9,9 +9,9 @@ uniform mat4 uPMatrix;
 varying vec4 color;
 
 void main(void) {
-  color = aColor;
+  color = vec4(aColor.rgb, 1.0);
   gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
-  gl_PointSize = 6.0;
+  gl_PointSize = aColor.a;
 }
 
 [fragment]

@@ -55,12 +55,12 @@ export default class AnimationController {
   }
 
   _appendSkinning (object, skinData) {
-    let boneMap = this._createBones(this.gameObject, skinData.joints);
+    let boneMap = {};
+    this.rootJoint = this._createBones(this.gameObject, skinData.joints, boneMap);
     this.skinningData = new SkinningData(boneMap, skinData);
-    console.info('appending skin', object, skinData);
   }
 
-  _createBones (parent, bone, boneMap = {}) {
+  _createBones (parent, bone, boneMap) {
     let boneObject = new GameObject({ name: bone.name });
     boneObject.transform.setFromMat4(bone.transform);
     boneMap[bone.name] = {
@@ -73,7 +73,7 @@ export default class AnimationController {
       this._createBones(boneObject, bone.children[i], boneMap);
     }
 
-    return boneMap;
+    return boneObject;
   }
 
   _appendAnimationObjects (list) {
@@ -136,6 +136,7 @@ export default class AnimationController {
 
   setObjectTransformInterpolated (object, animationData, frame1, frame2, progress) {
     let transform = object.transform;
+    let name = object.name;
 
     if (animationData.hasPosition) {
       animationData.getPosition(position1, frame1);

@@ -56,6 +56,8 @@ class ColladaConvert {
         this.config.includeAttribs['TEXCOORD1'] = false;
       }
 
+      Object.assign(opts, this.config);
+
       this.root = data.COLLADA;
       this.geometriesData = this.root.library_geometries;
       this.visualScenesData = this.root.library_visual_scenes;
