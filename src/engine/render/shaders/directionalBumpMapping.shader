@@ -34,6 +34,7 @@ void main(void) {
 }
 
 [fragment]
+
 precision highp float;
 
 uniform mat4 uNormalMatrix;

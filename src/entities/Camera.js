@@ -1,6 +1,7 @@
 import app from 'src/engine/Application';
 import math from 'math';
 const { mat4, vec3 } = math;
+const { min, max, PI } = Math;
 
 const UP_DIRECTION = vec3.fromValues(0, 1, 0);
 const RIGHT_DIRECTION = vec3.fromValues(1, 0, 0);
@@ -36,6 +37,8 @@ export default class Camera {
   rotate (horizontal, vertical) {
     this.yAngle += horizontal;
     this.xAngle += vertical;
+
+    this.xAngle = min(PI / 2, max(-PI / 2, this.xAngle));
   }
 
   recalculate () {

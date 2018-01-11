@@ -44,7 +44,7 @@ module.exports = {
     }
   },
   plugins: [
-    new HtmlWebpackPlugin({title: 'Output Management'}),
+    new HtmlWebpackPlugin({title: 'Engine demo'}),
     // new CleanWebpackPlugin(['dist']),
     new CopyWebpackPlugin([{
         from: 'resources/**/*.mdl', // copy models into resources folder

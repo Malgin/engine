@@ -155,6 +155,8 @@ export default class GameObjectScene extends BaseScene {
       quat.rotateY(this.animObject.transform.rotation, this.animObject.transform.rotation, Math.PI * dt);
     }
 
+    // mat4.targetTo()
+
   }
 
 
