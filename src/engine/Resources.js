@@ -25,6 +25,8 @@ class Resources {
     this.textures = {};
     this.objectTextures = {}; // textures that referenced by the objects
 
+    this.basePath = window.location.pathname ? window.location.pathname : '/';
+
     this.animationUrls = {};
     this.skinningUrls = {};
   }
@@ -46,7 +48,7 @@ class Resources {
   loadFile (file, loader, opts = {}, responseType = 'arraybuffer') {
     return new Promise ((resolve, reject) => {
       var oReq = new XMLHttpRequest();
-      oReq.open("GET", '/' + file, true);
+      oReq.open("GET", this.basePath + file, true);
       oReq.responseType = responseType;
 
       oReq.onload = function (oEvent) {
@@ -106,7 +108,7 @@ class Resources {
       image.onerror = null;
     }
 
-    image.src = url;
+    image.src = this.basePath + url;
 
     return new Promise((resolve, reject) => {
       image.onload = () => {
