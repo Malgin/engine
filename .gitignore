@@ -3,3 +3,6 @@ DS_Store
 .vscode
 dist
 .mayaSwatches
+.idea/
+cmake-build-debug/
+build_js/

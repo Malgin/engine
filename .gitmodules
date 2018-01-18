@@ -1,0 +1,3 @@
+[submodule "cppwrapper/cppeng"]
+	path = cppwrapper/cppeng
+	url = git@github.com:Division/cppeng.git
