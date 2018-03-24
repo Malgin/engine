@@ -157,6 +157,7 @@ export default class Shader {
     gl.attachShader(this.program, vertexCompiled);
     gl.attachShader(this.program, fragmentCompiled);
     gl.linkProgram(this.program);
+
     let success = gl.getProgramParameter(this.program, gl.LINK_STATUS);
     if (success) {
       this.loaded = true;

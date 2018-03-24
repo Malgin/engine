@@ -10,13 +10,35 @@ export default class Game extends Application {
 
   constructor (data) {
     super(data);
+    this.setupModule();
 
-    this.loadResources()
+    this.loadScript('cppwrapper.js')
+    // Promise.resolve()
+      .then(() => this.loadResources())
       .then(() => this.initEntities())
       .catch((e) => { throw e });
   }
 
+  setupModule () {
+    window.Module = {
+      preRun: [],
+      postRun: [],
+      print: (text) => console.log(text),
+      printErr: (error) => console.error(error),
+      canvas: this.canvas,
+      setStatus: function(text) {
+        console.info(text);
+      },
+      totalDependencies: 0,
+      monitorRunDependencies: function(left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+      }
+    };
+  }
+
   loadResources () {
+    // return Promise.resolve();
     return this.loadModels()
              .then(() => this.loadTextures());
   }
@@ -25,10 +47,10 @@ export default class Game extends Application {
     return Resources.loadFileList([
       // 'resources/models/group.mdl',
       // 'resources/models/textureTest/textured_cube.mdl',
-      'resources/models/skin_cilynder.mdl',
+      // 'resources/models/skin_cilynder.mdl',
       'resources/models/girl.mdl',
-      'resources/models/girl_my.mdl',
-      'resources/models/soldier.mdl',
+      // 'resources/models/girl_my.mdl',
+      // 'resources/models/soldier.mdl',
       // 'resources/models/textureTest/textured_plane.mdl'
     ], ModelLoader, { keepData: true });
   }
@@ -37,12 +59,26 @@ export default class Game extends Application {
     return Resources.loadObjectTextures();
   }
 
-  initEntities () {
-    this.scenes = [
-      new GameObjectScene()
-    ];
+  loadScript(url) {
+    let script = document.createElement("script");
 
-    this.setScene(0);
+    let promise = new Promise ((resolve, reject) => {
+      script.onreadystatechange = resolve;
+      script.onload = resolve;
+    });
+
+    script.src = url;
+    document.head.appendChild(script);
+
+    return promise;
+  }
+
+  initEntities () {
+    // this.scenes = [
+    //   new GameObjectScene()
+    // ];
+
+    // this.setScene(0);
   }
 
   setScene (scene) {
@@ -51,6 +87,9 @@ export default class Game extends Application {
   }
 
   render (dt, gl) {
+    // gl.clearColor(0.0, 0.0, 0.5, 1.0);
+    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     if (!this.scenes) return;
 
     this.scenes[this.currentScene].render(dt, gl);

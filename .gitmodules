@@ -1,3 +1,6 @@
 [submodule "cppwrapper/cppeng"]
 	path = cppwrapper/cppeng
 	url = git@github.com:Division/cppeng.git
+[submodule "ColladaExport"]
+	path = ColladaExport
+	url = git@github.com:Division/ColladaExport.git

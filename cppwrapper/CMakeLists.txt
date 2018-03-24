@@ -4,7 +4,7 @@ project(cppwrapper)
 set(CMAKE_CXX_STANDARD 11)
 
 IF(EMSCRIPTEN)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_SDL=2")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_WEBGL2=1 -s USE_SDL=2 --preload-file ../../resources@resources")
 ENDIF(EMSCRIPTEN)
 
 include_directories(./engine/include)

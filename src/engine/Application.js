@@ -65,13 +65,13 @@ export default class Application {
     let gl = null;
 
     try {
-      gl = this.canvas.getContext("webgl") || this.canvas.getContext("experimental-webgl");
+      gl = this.canvas.getContext("webgl2");
     }
     catch(e) {}
 
     if (!gl) {
       gl = null;
-      console.error('Can\'t get gl context');
+      console.error('Can\'t get WebGL 2 context');
       return;
     }
 

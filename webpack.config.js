@@ -58,7 +58,16 @@ module.exports = {
       {
         from: 'resources/**/*.png',
         to: '.'
+      },
+      {
+        from: 'cppwrapper/build_js/cppwrapper.js',
+        to: 'cppwrapper.js'
+      },
+      {
+        from: 'cppwrapper/build_js/cppwrapper.data',
+        to: 'cppwrapper.data'
       }
+
     ])
   ],
   output: {
