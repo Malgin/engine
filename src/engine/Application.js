@@ -43,6 +43,7 @@ export default class Application {
 
   createCanvas (element) {
     this.canvas = document.createElement('canvas');
+    this.canvas.setAttribute('id', 'canvas');
     element.appendChild(this.canvas);
   }
 
