@@ -9,7 +9,7 @@ ENDIF(EMSCRIPTEN)
 
 include_directories(./engine/include)
 include_directories(./engine/include)
-add_executable(cppwrapper main.cpp)
+add_executable(cppwrapper main.cpp game/Game.cpp game/Game.h game/objects/Sprite.cpp game/objects/Sprite.h)
 
 target_link_libraries(cppwrapper cppeng)
 
