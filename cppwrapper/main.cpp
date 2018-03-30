@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]){
   Game game;
 
-  Engine *engine = GetEngine();
+  Engine *engine = getEngine();
   engine->setup(&game);
 
   return 0;

@@ -12,7 +12,7 @@ void Game::init(Engine *engine) {
   _engine = engine;
 
   rootObj = CreateGameObject<GameObject>();
-//  sprite = CreateGameObject<Sprite>();
+  sprite = CreateGameObject<Sprite>();
 }
 
 void Game::update(float dt) {

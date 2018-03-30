@@ -5,7 +5,8 @@
 #ifndef CPPWRAPPER_SPRITE_H
 #define CPPWRAPPER_SPRITE_H
 
-#include "engine/EngineMain.h"
+#include "objects/MeshObject.h"
+#include "render/shader/Shader.h"
 
 class Sprite : public MeshObject {
 public:
