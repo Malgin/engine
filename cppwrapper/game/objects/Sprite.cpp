@@ -3,7 +3,18 @@
 //
 
 #include "Sprite.h"
-#include "render/mesh/Mesh.h"
+
+
+Material createMaterial() {
+//  ShaderCapsSetPtr caps(new ShaderCapsSet());
+//  auto engine = getEngine();
+//
+//  auto shader = _renderer->getShaderWithCaps(caps).get();
+//  shader->addUniform(UniformName::ProjectionMatrix);
+//  shader->addUniform(UniformName::ModelViewMatrix);
+//  shader->addUniform(UniformName::Texture0);
+
+}
 
 Sprite::Sprite() : MeshObject() {
   GLushort indices[] = {0, 1, 2, 0, 2, 3};
@@ -17,8 +28,11 @@ Sprite::Sprite() : MeshObject() {
                           1.0f, 1.0f,
                           0,  1.0f };
 
+  _mesh = std::make_shared<Mesh>();
   _mesh->setVertices(vertices, 4);
   _mesh->setIndices(indices, 6);
   _mesh->setTexCoord0(texcoords, 4);
   _mesh->createBuffer();
+
+  _material = std::make_shared<MaterialWhite>();
 }

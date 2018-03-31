@@ -7,7 +7,8 @@ IF(EMSCRIPTEN)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_WEBGL2=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' --preload-file ../../resources@resources")
 ENDIF(EMSCRIPTEN)
 
-include_directories(./engine/include)
+#SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)
+
 include_directories(./engine/include)
 add_executable(cppwrapper main.cpp game/Game.cpp game/Game.h game/objects/Sprite.cpp game/objects/Sprite.h)
 

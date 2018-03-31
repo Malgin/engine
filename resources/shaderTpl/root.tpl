@@ -12,7 +12,6 @@ void main(void) {
 
   vTexCoord0 = aTexCoord0;
   gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
-  //gl_Position = uPMatrix * uMVMatrix * vec4(aPosition.x * aTexCoord0.x, aPosition.y * aTexCoord0.y, 0.0, 1.0);
 }
 
 [fragment]
@@ -24,9 +23,9 @@ in vec2 vTexCoord0;
 uniform sampler2D uTexture0;
 
 void main(void) {
-  vec4 texture0Color = texture(uTexture0, vTexCoord0);
-  fragmentColor = texture0Color;
+  //vec4 texture0Color = texture(uTexture0, vTexCoord0);
+  //fragmentColor = texture0Color;
 
-  //fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
   //fragmentColor = vec4(vTexCoord0.x, vTexCoord0.y, 0, 1);
 }
