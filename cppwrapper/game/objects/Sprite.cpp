@@ -34,5 +34,5 @@ Sprite::Sprite() : MeshObject() {
   _mesh->setTexCoord0(texcoords, 4);
   _mesh->createBuffer();
 
-  _material = std::make_shared<MaterialWhite>();
+  _material = std::make_shared<MaterialSingleColor>();
 }

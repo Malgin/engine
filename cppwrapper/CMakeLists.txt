@@ -4,7 +4,7 @@ project(cppwrapper)
 set(CMAKE_CXX_STANDARD 11)
 
 IF(EMSCRIPTEN)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_WEBGL2=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' --preload-file ../../resources@resources")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS=2 --bind -s USE_WEBGL2=1 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='[\"png\"]' -s DEMANGLE_SUPPORT=1 --preload-file ../../resources@resources")
 ENDIF(EMSCRIPTEN)
 
 #SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)

@@ -6,10 +6,12 @@
 #define CPPWRAPPER_SPRITE_H
 
 #include "engine/EngineMain.h"
+#include <memory>
 
 class Sprite : public MeshObject {
 public:
   Sprite();
+  MaterialSingleColor *materialColor() { return (MaterialSingleColor *)(_material.get()); }
 };
 
 

@@ -21,11 +21,15 @@ out vec4 fragmentColor;
 
 in vec2 vTexCoord0;
 uniform sampler2D uTexture0;
+{% if COLOR %}uniform vec4 uColor;{% endif %}
 
 void main(void) {
+  {% if COLOR %}
+  fragmentColor = uColor;
+  {% else %}
+  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+  {% endif %}
+
   //vec4 texture0Color = texture(uTexture0, vTexCoord0);
   //fragmentColor = texture0Color;
-
-  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
-  //fragmentColor = vec4(vTexCoord0.x, vTexCoord0.y, 0, 1);
 }
