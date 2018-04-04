@@ -1,10 +1,11 @@
 #include <engine/EngineMain.h>
-#include <Resources.h>
+#include "game/Game.h"
 
 int main(int argc, char *argv[]){
-  Engine *engine = GetEngine();
+  Game *game = new Game(); // new should be used because current scope will be deleted in the web build
 
-  engine->setupSDL();
+  Engine *engine = getEngine();
+  engine->setup(game);
 
   return 0;
 }
