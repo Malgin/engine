@@ -9,11 +9,14 @@ GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
 std::shared_ptr<Sprite> sprite2;
 std::shared_ptr<Sprite> sprite3;
+CameraPtr camera;
 
 float ang = 0;
 
 void Game::init(Engine *engine) {
   _engine = engine;
+  camera = CreateGameObject<Camera>();
+  camera->transform()->position(vec3(10, 0, 15));
 
   sprite1 = CreateGameObject<Sprite>();
   sprite1->transform()->position(vec3(0, 0, -10));
