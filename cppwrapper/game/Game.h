@@ -19,6 +19,8 @@ private:
 
 private:
   void _updateGameLogic(float dt);
+
+  void _updateInput(float dt);
 };
 
 

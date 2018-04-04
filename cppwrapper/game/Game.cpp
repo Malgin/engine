@@ -16,7 +16,7 @@ float ang = 0;
 void Game::init(Engine *engine) {
   _engine = engine;
   camera = CreateGameObject<Camera>();
-  camera->transform()->position(vec3(10, 0, 15));
+  camera->transform()->position(vec3(0, 0, 5));
 
   sprite1 = CreateGameObject<Sprite>();
   sprite1->transform()->position(vec3(0, 0, -10));
@@ -36,9 +36,42 @@ void Game::init(Engine *engine) {
 }
 
 void Game::update(float dt) {
+  _updateInput(dt);
   _updateGameLogic(dt);
+
   _scene.update(dt);
   _engine->renderScene(_scene);
+}
+
+void Game::_updateInput(float dt) {
+  auto input = getEngine()->input();
+
+  vec3 posDelta = vec3(0, 0, 0);
+  if (input->keyDown(Key::Left) || input->keyDown(Key::A)) {
+    posDelta += camera->transform()->left();
+  }
+
+  if (input->keyDown(Key::Right) || input->keyDown(Key::D)) {
+    posDelta += camera->transform()->right();
+  }
+
+  if (input->keyDown(Key::Up) || input->keyDown(Key::W)) {
+    posDelta += camera->transform()->forward();
+  }
+
+  if (input->keyDown(Key::Down) || input->keyDown(Key::S)) {
+    posDelta += camera->transform()->backward();
+  }
+
+  if (input->keyDown(Key::Up) || input->keyDown(Key::E)) {
+    posDelta += camera->transform()->up();
+  }
+
+  if (input->keyDown(Key::Down) || input->keyDown(Key::Q)) {
+    posDelta += camera->transform()->down();
+  }
+
+  camera->transform()->translate(posDelta * dt * 20.0f);
 }
 
 void Game::_updateGameLogic(float dt) {
