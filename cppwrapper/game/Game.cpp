@@ -12,6 +12,8 @@ std::shared_ptr<Sprite> sprite3;
 CameraPtr camera;
 
 float ang = 0;
+float camXAngle = 0;
+float camYAngle = 0;
 
 void Game::init(Engine *engine) {
   _engine = engine;
@@ -63,12 +65,19 @@ void Game::_updateInput(float dt) {
     posDelta += camera->transform()->backward();
   }
 
-  if (input->keyDown(Key::Up) || input->keyDown(Key::E)) {
+  if (input->keyDown(Key::E)) {
     posDelta += camera->transform()->up();
   }
 
-  if (input->keyDown(Key::Down) || input->keyDown(Key::Q)) {
+  if (input->keyDown(Key::Q)) {
     posDelta += camera->transform()->down();
+  }
+
+  if (input->keyDown(Key::MouseLeft)) {
+    camXAngle -= input->mouseDelta().y * dt * 2;
+    camYAngle -= input->mouseDelta().x * dt * 2;
+    quat rotation(vec3(camXAngle, camYAngle, 0));
+    camera->transform()->rotation(rotation);
   }
 
   camera->transform()->translate(posDelta * dt * 20.0f);
