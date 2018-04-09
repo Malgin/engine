@@ -4,6 +4,7 @@
 
 #include "Game.h"
 #include "objects/Sprite.h"
+#include "loader/HierarchyLoader.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -14,9 +15,15 @@ CameraPtr camera;
 float ang = 0;
 float camXAngle = 0;
 float camYAngle = 0;
+ModelBundlePtr bundle;
 
 void Game::init(Engine *engine) {
   _engine = engine;
+
+  bundle = Resources::loadModel("resources/models/group.mdl");
+  rootObj = loader::loadHierarchy(bundle);
+
+
   camera = CreateGameObject<Camera>();
   camera->transform()->position(vec3(0, 0, 5));
 
@@ -74,8 +81,8 @@ void Game::_updateInput(float dt) {
   }
 
   if (input->keyDown(Key::MouseLeft)) {
-    camXAngle -= input->mouseDelta().y * dt * 2;
-    camYAngle -= input->mouseDelta().x * dt * 2;
+    camXAngle -= input->mouseDelta().y * 0.008;
+    camYAngle -= input->mouseDelta().x * 0.008;
     quat rotation(vec3(camXAngle, camYAngle, 0));
     camera->transform()->rotation(rotation);
   }
