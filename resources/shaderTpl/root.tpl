@@ -1,7 +1,15 @@
 [vertex]
 #version {{ version }}
 
-uniform mat4 uMVMatrix;
+struct Transform {
+  mat4 model;
+};
+
+layout (std140) uniform TransformBlock {
+  Transform transform;
+};
+
+uniform mat4 uViewMatrix;
 uniform mat4 uPMatrix;
 
 {% if LIGHTING %}
@@ -25,14 +33,16 @@ void main(void) {
 
   vTexCoord0 = aTexCoord0;
 
+  vec4 position_cameraspace = uViewMatrix * transform.model * vec4(aPosition, 1.0);
+
 {% if LIGHTING %}
-  vec4 position_cameraspace = uMVMatrix * vec4(aPosition, 1.0);
+  //vec4 position_cameraspace = uViewMatrix /* model matrix */ * vec4(aPosition, 1.0);
   vNormal_cameraspace = normalize(uNormalMatrix * aNormal);
   vLightDir_cameraspace = normalize(uNormalMatrix * vec3(1.5, -2, -1));
   //vEyeDirection_cameraspace = vec3(0, 0, 0) - position_cameraspace.xyz; // vector to the camera
 {% endif %}
 
-  gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
+  gl_Position = uPMatrix * position_cameraspace;
 }
 
 [fragment]
