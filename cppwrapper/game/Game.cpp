@@ -12,6 +12,8 @@ std::shared_ptr<Sprite> sprite2;
 std::shared_ptr<Sprite> sprite3;
 CameraPtr camera;
 
+LightObjectPtr light;
+
 float ang = 0;
 float camXAngle = 0;
 float camYAngle = 0;
@@ -23,6 +25,9 @@ void Game::init(Engine *engine) {
   bundle = Resources::loadModel("resources/models/group.mdl");
   rootObj = loader::loadHierarchy(bundle);
 
+  light = CreateGameObject<LightObject>();
+  light->transform()->position(vec3(0, 10, 0));
+  light->enableDebug();
 
   camera = CreateGameObject<Camera>();
   camera->transform()->position(vec3(0, 0, 5));
@@ -80,6 +85,10 @@ void Game::_updateInput(float dt) {
     posDelta += camera->transform()->down();
   }
 
+  if (input->keyDown(Key::Space)) {
+    rootObj->transform()->rotate(vec3(0, 0, 1), dt * PI);
+  }
+
   if (input->keyDown(Key::MouseLeft)) {
     camXAngle -= input->mouseDelta().y * 0.008;
     camYAngle -= input->mouseDelta().x * 0.008;
@@ -95,4 +104,6 @@ void Game::_updateGameLogic(float dt) {
   sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
+
+  light->transform()->setPosition(vec3(cos(ang) * 5, 5, sin(ang) * 5));
 }

@@ -3,6 +3,7 @@
 
 struct Transform {
   mat4 model;
+  mat4 normalMatrix;
 };
 
 layout (std140) uniform TransformBlock {
@@ -19,26 +20,25 @@ uniform mat3 uNormalMatrix;
 vec3 uLightDir = vec3(1, -1, -1);
 in vec3 aNormal;
 
-out vec3 vNormal_cameraspace;
-out vec3 vLightDir_cameraspace;
+out vec3 vNormal_worldspace;
 //out vec3 vEyeDirection_cameraspace;
 {% endif %}
 
 in vec3 aPosition;
 in vec2 aTexCoord0;
 out vec2 vTexCoord0;
+out vec4 vPosition_worldspace;
 
 void main(void) {
   gl_PointSize = 5.0;
 
   vTexCoord0 = aTexCoord0;
 
-  vec4 position_cameraspace = uViewMatrix * transform.model * vec4(aPosition, 1.0);
+  vPosition_worldspace = transform.model * vec4(aPosition, 1.0);
+  vec4 position_cameraspace = uViewMatrix * vPosition_worldspace;
 
 {% if LIGHTING %}
-  //vec4 position_cameraspace = uViewMatrix /* model matrix */ * vec4(aPosition, 1.0);
-  vNormal_cameraspace = normalize(uNormalMatrix * aNormal);
-  vLightDir_cameraspace = normalize(uNormalMatrix * vec3(1.5, -2, -1));
+  vNormal_worldspace = normalize(transform.model * vec4(aNormal, 0)).xyz;
   //vEyeDirection_cameraspace = vec3(0, 0, 0) - position_cameraspace.xyz; // vector to the camera
 {% endif %}
 
@@ -54,11 +54,29 @@ in vec2 vTexCoord0;
 uniform sampler2D uTexture0;
 {% if COLOR %}uniform vec4 uColor;{% endif %}
 
+in vec4 vPosition_worldspace;
+
 {% if LIGHTING %}
-in vec3 vNormal_cameraspace;
+
+struct Light {
+  vec3 position;
+  float attenuation;
+  vec3 color;
+};
+
+layout (std140) uniform LightBlock {
+  Light lights[1];
+};
+
+
+in vec3 vNormal_worldspace;
 //in vec3 vEyeDirection_cameraspace;
-in vec3 vLightDir_cameraspace;
 vec4 ambient = vec4(0.1, 0.1, 0.1, 0.1);
+
+vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 lightColor) {
+  float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
+  return lightColor * lightValue;
+}
 {% endif %}
 
 void main(void) {
@@ -71,14 +89,17 @@ void main(void) {
 {% if LIGHTING %}
   vec3 uLightColor = vec3(1.0, 1.0, 1.0);
 
-  vec3 normal_cameraspace = vNormal_cameraspace;
+  vec3 normal_worldspace = normalize(vNormal_worldspace);
   //vec3 E = normalize(vEyeDirection_cameraspace);
   //vec3 reflect = reflect(vLightDir_cameraspace, normal_cameraspace);
   //float cosAlpha = clamp(dot(E, reflect), 0.0, 1.0);
   //vec3 specular = pow(cosAlpha, 8.0) * uLightColor;
 
-  float lightValue = clamp(dot(-vLightDir_cameraspace, normal_cameraspace), 0.0, 1.0);
-  fragmentColor = vec4(fragmentColor.xyz * lightValue, 1.0);
+  vec3 lightPosition = lights[0].position;
+  //vec3 lightPosition = vec3(0, 10, 0);
+  vec3 lightDir = normalize(vPosition_worldspace.xyz - lightPosition);
+  vec3 lightValue = calculateFragmentDiffuse(0.0, 0.0, lightDir, normal_worldspace, uLightColor);
+  fragmentColor = vec4(lightValue, 1.0);
   fragmentColor += ambient;
 {% endif %}
 
