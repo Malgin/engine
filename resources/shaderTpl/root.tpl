@@ -58,6 +58,13 @@ in vec4 vPosition_worldspace;
 
 {% if LIGHTING %}
 
+const int TILE_SIZE = 32;
+const vec2 screenSize = vec2(1280, 960);
+const ivec2 tilesCount = ivec2(ceil(screenSize / TILE_SIZE));
+
+uniform samplerBuffer uLightGrid;
+uniform samplerBuffer uLightIndices;
+
 struct Light {
   vec3 position;
   float attenuation;
@@ -65,9 +72,8 @@ struct Light {
 };
 
 layout (std140) uniform LightBlock {
-  Light lights[1];
+  Light lights[100];
 };
-
 
 in vec3 vNormal_worldspace;
 //in vec3 vEyeDirection_cameraspace;
@@ -83,7 +89,7 @@ void main(void) {
   {% if COLOR %}
   fragmentColor = uColor;
   {% else %}
-  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+  fragmentColor = vec4(0.0, 0.0, 0.0, 1.0);
   {% endif %}
 
 {% if LIGHTING %}
@@ -95,11 +101,25 @@ void main(void) {
   //float cosAlpha = clamp(dot(E, reflect), 0.0, 1.0);
   //vec3 specular = pow(cosAlpha, 8.0) * uLightColor;
 
+  int tileX = int(gl_FragCoord.x / TILE_SIZE);
+  int tileY = int(gl_FragCoord.y / TILE_SIZE);
+  int tileIndex = tileX + tilesCount.x * tileY;
+
+  //fragmentColor = texelFetch(uLightGrid, tileIndex);
+  ivec2 gridItem = ivec2(texelFetch(uLightGrid, 0));
+  int lightCount = gridItem.r;
+  if (gridItem.r > 0) {
+    fragmentColor = vec4(1,1,1,1);
+  }
+  //fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(0.5 * lightCount, 0, 0, 1) : vec4(0, 0.5 * lightCount, 0, 1);
+  //fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
+  /*
+
   vec3 lightPosition = lights[0].position;
   //vec3 lightPosition = vec3(0, 10, 0);
   vec3 lightDir = normalize(vPosition_worldspace.xyz - lightPosition);
   vec3 lightValue = calculateFragmentDiffuse(0.0, 0.0, lightDir, normal_worldspace, uLightColor);
-  fragmentColor = vec4(lightValue, 1.0);
+  fragmentColor = vec4(lightValue, 1.0); */
   fragmentColor += ambient;
 {% endif %}
 
