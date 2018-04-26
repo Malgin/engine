@@ -62,7 +62,7 @@ const int TILE_SIZE = 32;
 const vec2 screenSize = vec2(1280, 960);
 const ivec2 tilesCount = ivec2(ceil(screenSize / TILE_SIZE));
 
-uniform samplerBuffer uLightGrid;
+uniform usamplerBuffer uLightGrid;
 uniform samplerBuffer uLightIndices;
 
 struct Light {
@@ -105,14 +105,9 @@ void main(void) {
   int tileY = int(gl_FragCoord.y / TILE_SIZE);
   int tileIndex = tileX + tilesCount.x * tileY;
 
-  //fragmentColor = texelFetch(uLightGrid, tileIndex);
-  ivec2 gridItem = ivec2(texelFetch(uLightGrid, 0));
-  int lightCount = gridItem.r;
-  if (gridItem.r > 0) {
-    fragmentColor = vec4(1,1,1,1);
-  }
-  //fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(0.5 * lightCount, 0, 0, 1) : vec4(0, 0.5 * lightCount, 0, 1);
-  //fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
+  uvec4 gridItem = texelFetch(uLightGrid, tileIndex);
+  uint lightCount = gridItem.g;
+  fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(0.5 * lightCount, 0, 0, 1) : vec4(0, 0.5 * lightCount, 0, 1);
   /*
 
   vec3 lightPosition = lights[0].position;

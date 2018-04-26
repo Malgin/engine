@@ -27,6 +27,7 @@ void Game::init(Engine *engine) {
 
   light = CreateGameObject<LightObject>();
   light->transform()->position(vec3(0, 4, 0));
+  light->radius(4);
   light->enableDebug();
 
   camera = CreateGameObject<Camera>();
@@ -105,5 +106,5 @@ void Game::_updateGameLogic(float dt) {
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
-//  light->transform()->setPosition(vec3(cos(ang) * 5, 5, sin(ang) * 5));
+  light->transform()->setPosition(vec3(cos(ang) * 5, 5, sin(ang) * 5));
 }
