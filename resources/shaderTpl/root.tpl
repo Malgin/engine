@@ -58,12 +58,8 @@ in vec4 vPosition_worldspace;
 
 {% if LIGHTING %}
 
-const int TILE_SIZE = 32;
-const vec2 screenSize = vec2(1280, 960);
-const ivec2 tilesCount = ivec2(ceil(screenSize / TILE_SIZE));
-
 uniform usamplerBuffer uLightGrid;
-uniform samplerBuffer uLightIndices;
+uniform usamplerBuffer uLightIndices;
 
 struct Light {
   vec3 position;
@@ -75,13 +71,38 @@ layout (std140) uniform LightBlock {
   Light lights[100];
 };
 
+struct Camera {
+  vec3 position;
+  uvec2 screenSize;
+};
+
+layout (std140) uniform CameraBlock {
+  Camera camera;
+};
+
+const int TILE_SIZE = 32;
+vec2 screenSize = vec2(camera.screenSize);
+ivec2 tilesCount = ivec2(ceil(screenSize / TILE_SIZE));
+
 in vec3 vNormal_worldspace;
 //in vec3 vEyeDirection_cameraspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.1);
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.1) * 0.0;
 
-vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 lightColor) {
+vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
-  return lightColor * lightValue;
+  float attenuationValue = 1.0 / (1.0 + attenuation * pow(distanceToLight, 2));
+  vec3 diffuse = lightColor * lightValue;
+
+  //vec3 E = normalize(vEyeDirection_cameraspace);
+  //vec3 reflect = reflect(vLightDir_cameraspace, normal_cameraspace);
+  //float cosAlpha = clamp(dot(E, reflect), 0.0, 1.0);
+  //vec3 specular = pow(cosAlpha, 8.0) * uLightColor;
+
+  vec3 reflect = reflect(lightDir, normal);
+  float cosAlpha = clamp(dot(eyeDir, reflect), 0.0, 1.0);
+  vec3 specular = pow(cosAlpha, 8.0) * lightColor;
+
+  return attenuationValue * (diffuse + specular);
 }
 {% endif %}
 
@@ -96,25 +117,26 @@ void main(void) {
   vec3 uLightColor = vec3(1.0, 1.0, 1.0);
 
   vec3 normal_worldspace = normalize(vNormal_worldspace);
-  //vec3 E = normalize(vEyeDirection_cameraspace);
-  //vec3 reflect = reflect(vLightDir_cameraspace, normal_cameraspace);
-  //float cosAlpha = clamp(dot(E, reflect), 0.0, 1.0);
-  //vec3 specular = pow(cosAlpha, 8.0) * uLightColor;
 
   int tileX = int(gl_FragCoord.x / TILE_SIZE);
   int tileY = int(gl_FragCoord.y / TILE_SIZE);
   int tileIndex = tileX + tilesCount.x * tileY;
 
   uvec4 gridItem = texelFetch(uLightGrid, tileIndex);
+  uint lightOffset = gridItem.r;
   uint lightCount = gridItem.g;
-  fragmentColor = (tileX + tileY) % 2 == 0 ? vec4(0.5 * lightCount, 0, 0, 1) : vec4(0, 0.5 * lightCount, 0, 1);
-  /*
+  vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
 
-  vec3 lightPosition = lights[0].position;
-  //vec3 lightPosition = vec3(0, 10, 0);
-  vec3 lightDir = normalize(vPosition_worldspace.xyz - lightPosition);
-  vec3 lightValue = calculateFragmentDiffuse(0.0, 0.0, lightDir, normal_worldspace, uLightColor);
-  fragmentColor = vec4(lightValue, 1.0); */
+  for (uint i = 0u; i < lightCount; i++) {
+    uint lightIndex = texelFetch(uLightIndices, int(lightOffset + i)).r;
+    vec3 lightPosition = lights[lightIndex].position;
+    vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
+    float distanceToLight = length(lightDir);
+    lightDir /= distanceToLight; // normalize
+    vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color);
+    fragmentColor += vec4(lightValue, 1.0);
+  }
+
   fragmentColor += ambient;
 {% endif %}
 
