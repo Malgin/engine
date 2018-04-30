@@ -83,7 +83,7 @@ layout (std140) uniform CameraBlock {
 
 in vec3 vNormal_worldspace;
 //in vec3 vEyeDirection_cameraspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0);
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.0;
 
 vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);

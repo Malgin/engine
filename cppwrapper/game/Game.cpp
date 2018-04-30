@@ -6,6 +6,7 @@
 #include "objects/Sprite.h"
 #include "loader/HierarchyLoader.h"
 #include <vector>
+#include "EngMath.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -55,7 +56,8 @@ void Game::init(Engine *engine) {
   }
 
   camera = CreateGameObject<Camera>();
-  camera->transform()->position(vec3(0, 0, 5));
+  camera->transform()->position(vec3(0, 5, 15));
+  camXAngle = -M_PI / 8;
 
   sprite1 = CreateGameObject<Sprite>();
   sprite1->transform()->position(vec3(0, 0, -10));
@@ -117,8 +119,6 @@ void Game::_updateInput(float dt) {
   if (input->keyDown(Key::MouseLeft)) {
     camXAngle -= input->mouseDelta().y * 0.008;
     camYAngle -= input->mouseDelta().x * 0.008;
-    quat rotation(vec3(camXAngle, camYAngle, 0));
-    camera->transform()->rotation(rotation);
   }
 
   camera->transform()->translate(posDelta * dt * 20.0f);
@@ -126,6 +126,10 @@ void Game::_updateInput(float dt) {
 
 void Game::_updateGameLogic(float dt) {
   ang += dt * PI;
+
+  quat rotation(vec3(camXAngle, camYAngle, 0));
+  camera->transform()->rotation(rotation);
+
   sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
