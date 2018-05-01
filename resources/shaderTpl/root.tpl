@@ -14,10 +14,6 @@ uniform mat4 uViewMatrix;
 uniform mat4 uPMatrix;
 
 {% if LIGHTING %}
-//uniform mat4 uViewMatrix;
-uniform mat3 uNormalMatrix;
-//uniform vec3 uLightDir;
-vec3 uLightDir = vec3(1, -1, -1);
 in vec3 aNormal;
 
 out vec3 vNormal_worldspace;
@@ -47,16 +43,22 @@ void main(void) {
 
 [fragment]
 #version {{ version }}
-{% if WEBGL %}precision highp float;{% endif %}
+{% if WEBGL %}precision highp float; precision highp int;{% endif %}
 out vec4 fragmentColor;
 
 in vec2 vTexCoord0;
-uniform sampler2D uTexture0;
+uniform highp sampler2D uTexture0;
 {% if COLOR %}uniform vec4 uColor;{% endif %}
 
 in vec4 vPosition_worldspace;
 
 {% if LIGHTING %}
+
+//uniform usamplerBuffer uLightGrid;
+//uniform usamplerBuffer uLightIndices;
+
+uniform highp usampler2D uLightGrid;
+uniform highp usampler2D uLightIndices;
 
 struct Light {
   vec3 position;
@@ -65,17 +67,34 @@ struct Light {
 };
 
 layout (std140) uniform LightBlock {
-  Light lights[1];
+  Light lights[1000];
 };
 
 
+struct Camera {
+  vec3 position;
+  uvec2 screenSize;
+};
+
+
+layout (std140) uniform CameraBlock {
+  Camera camera;
+};
+
 in vec3 vNormal_worldspace;
 //in vec3 vEyeDirection_cameraspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.1);
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.0;
 
-vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 lightColor) {
+vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
-  return lightColor * lightValue;
+  float attenuationValue = 1.0 / (1.0 + attenuation * pow(distanceToLight, 2.0));
+  vec3 diffuse = lightColor * lightValue;
+
+  vec3 reflect = reflect(lightDir, normal);
+  float cosAlpha = clamp(dot(eyeDir, reflect), 0.0, 1.0);
+  vec3 specular = pow(cosAlpha, 8.0) * lightColor;
+
+  return attenuationValue * (diffuse + specular);
 }
 {% endif %}
 
@@ -83,23 +102,43 @@ void main(void) {
   {% if COLOR %}
   fragmentColor = uColor;
   {% else %}
-  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+  fragmentColor = vec4(0.0, 0.0, 0.0, 1.0);
   {% endif %}
 
 {% if LIGHTING %}
-  vec3 uLightColor = vec3(1.0, 1.0, 1.0);
+
+  float TILE_SIZE = 32.0;
+  vec2 screenSize = vec2(camera.screenSize);
+  ivec2 tilesCount = ivec2(ceil(screenSize / TILE_SIZE));
 
   vec3 normal_worldspace = normalize(vNormal_worldspace);
-  //vec3 E = normalize(vEyeDirection_cameraspace);
-  //vec3 reflect = reflect(vLightDir_cameraspace, normal_cameraspace);
-  //float cosAlpha = clamp(dot(E, reflect), 0.0, 1.0);
-  //vec3 specular = pow(cosAlpha, 8.0) * uLightColor;
 
-  vec3 lightPosition = lights[0].position;
-  //vec3 lightPosition = vec3(0, 10, 0);
-  vec3 lightDir = normalize(vPosition_worldspace.xyz - lightPosition);
-  vec3 lightValue = calculateFragmentDiffuse(0.0, 0.0, lightDir, normal_worldspace, uLightColor);
-  fragmentColor = vec4(lightValue, 1.0);
+  int tileX = int(floor(gl_FragCoord.x / TILE_SIZE));
+  int tileY = int(floor(gl_FragCoord.y / TILE_SIZE));
+  int tileIndex = tileX + tilesCount.x * tileY;
+  vec2 tileCount = ceil(vec2(screenSize / TILE_SIZE));
+
+  //uvec4 gridItem = texelFetch(uLightGrid, tileIndex);
+  uvec4 gridItem = texture(uLightGrid, vec2(float(tileX) / tileCount.x, float(tileY) / tileCount.y));
+  uint lightOffset = gridItem.r;
+  uint lightCount = gridItem.g;
+  vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
+
+  //fragmentColor += vec4(lightOffset, lightCount, 0, 1.0);
+
+  for (uint i = 0u; i < lightCount; i++) {
+    uint currentOffset = lightOffset + i;
+    //uint lightIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+    uint lightIndex = texelFetch(uLightIndices, ivec2(currentOffset % 4096u, int(floor(float(currentOffset) / 4096.0))), 0).r;
+
+    vec3 lightPosition = lights[lightIndex].position;
+    vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
+    float distanceToLight = length(lightDir);
+    lightDir /= distanceToLight; // normalize
+    vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color);
+    fragmentColor += vec4(lightValue, 1.0);
+  }
+
   fragmentColor += ambient;
 {% endif %}
 

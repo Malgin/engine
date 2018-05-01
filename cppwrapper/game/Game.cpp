@@ -5,6 +5,8 @@
 #include "Game.h"
 #include "objects/Sprite.h"
 #include "loader/HierarchyLoader.h"
+#include <vector>
+#include "EngMath.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -13,6 +15,8 @@ std::shared_ptr<Sprite> sprite3;
 CameraPtr camera;
 
 LightObjectPtr light;
+LightObjectPtr light2;
+GameObjectPtr lightRing1;
 
 float ang = 0;
 float camXAngle = 0;
@@ -26,11 +30,34 @@ void Game::init(Engine *engine) {
   rootObj = loader::loadHierarchy(bundle);
 
   light = CreateGameObject<LightObject>();
-  light->transform()->position(vec3(0, 10, 0));
+  light->transform()->position(vec3(0, 4, 0));
+  light->radius(20);
+  light->color(vec3(0, 1, 0));
   light->enableDebug();
 
+  light2 = CreateGameObject<LightObject>();
+  light2->transform()->position(vec3(0, 4, 0));
+  light2->radius(30);
+  light2->color(vec3(1, 0, 0));
+  light2->enableDebug();
+
+  lightRing1 = CreateGameObject<GameObject>();
+  lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
+  lightRing1->transform()->position(vec3(1.2, 0, 1));
+  int ringCount = 10;
+  for (int i = 0; i < ringCount; i++) {
+    auto lightInRing = CreateGameObject<LightObject>();
+    float ang = M_PI * 2 * i / 10.0f;
+    lightInRing->transform()->position(vec3(cosf(ang) * 4, 0, sinf(ang) * 4));
+    lightInRing->radius(7);
+    lightInRing->color(vec3(0, 1, 1));
+    lightInRing->enableDebug();
+    lightInRing->transform()->parent(lightRing1->transform());
+  }
+
   camera = CreateGameObject<Camera>();
-  camera->transform()->position(vec3(0, 0, 5));
+  camera->transform()->position(vec3(0, 5, 15));
+  camXAngle = -M_PI / 8;
 
   sprite1 = CreateGameObject<Sprite>();
   sprite1->transform()->position(vec3(0, 0, -10));
@@ -92,8 +119,6 @@ void Game::_updateInput(float dt) {
   if (input->keyDown(Key::MouseLeft)) {
     camXAngle -= input->mouseDelta().y * 0.008;
     camYAngle -= input->mouseDelta().x * 0.008;
-    quat rotation(vec3(camXAngle, camYAngle, 0));
-    camera->transform()->rotation(rotation);
   }
 
   camera->transform()->translate(posDelta * dt * 20.0f);
@@ -101,9 +126,14 @@ void Game::_updateInput(float dt) {
 
 void Game::_updateGameLogic(float dt) {
   ang += dt * PI;
+
+  quat rotation(vec3(camXAngle, camYAngle, 0));
+  camera->transform()->rotation(rotation);
+
   sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
-  light->transform()->setPosition(vec3(cos(ang) * 5, 5, sin(ang) * 5));
+  light->transform()->setPosition(vec3(cos(ang) * 5, 3, sin(ang) * 5));
+  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
 }
