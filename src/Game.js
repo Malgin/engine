@@ -14,8 +14,8 @@ export default class Game extends Application {
 
     this.loadScript('cppwrapper.js')
     // Promise.resolve()
-      .then(() => this.loadResources())
-      .then(() => this.initEntities())
+      // .then(() => this.loadResources())
+      // .then(() => this.initEntities())
       .catch((e) => { throw e });
   }
 
@@ -87,8 +87,8 @@ export default class Game extends Application {
   }
 
   render (dt, gl) {
-    // gl.clearColor(0.0, 0.0, 0.5, 1.0);
-    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(0.0, 0.5, 0.5, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     if (!this.scenes) return;
 
