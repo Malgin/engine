@@ -25,28 +25,28 @@ export default class Input {
   onMouseMove (e) {
     this.mousePos[0] = e.clientX;
     this.mousePos[1] = e.clientY;
-    e.stopPropagation();
+    // e.stopPropagation();
   }
 
   onMouseDown (e) {
     this.mouseMap[e.button] = true;
-    e.preventDefault();
-    e.stopPropagation();
+    // e.preventDefault();
+    // e.stopPropagation();
   }
 
   onMouseUp (e) {
     this.mouseMap[e.button] = false;
-    e.stopPropagation();
+    // e.stopPropagation();
   }
 
   onKeyDown (e) {
     this.keyMap[e.keyCode] = true;
-    e.stopPropagation();
+    // e.stopPropagation();
   }
 
   onKeyUp (e) {
     this.keyMap[e.keyCode] = false;
-    e.stopPropagation();
+    // e.stopPropagation();
   }
 
   keyDown (key) {

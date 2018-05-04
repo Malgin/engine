@@ -54,11 +54,13 @@ in vec4 vPosition_worldspace;
 
 {% if LIGHTING %}
 
-//uniform usamplerBuffer uLightGrid;
-//uniform usamplerBuffer uLightIndices;
-
+{% if USE_BUFFER_TEXTURE %}
+uniform usamplerBuffer uLightGrid;
+uniform usamplerBuffer uLightIndices;
+{% else %}
 uniform highp usampler2D uLightGrid;
 uniform highp usampler2D uLightIndices;
+{% endif %}
 
 struct Light {
   vec3 position;
@@ -115,22 +117,26 @@ void main(void) {
 
   int tileX = int(floor(gl_FragCoord.x / TILE_SIZE));
   int tileY = int(floor(gl_FragCoord.y / TILE_SIZE));
-  int tileIndex = tileX + tilesCount.x * tileY;
   vec2 tileCount = ceil(vec2(screenSize / TILE_SIZE));
 
-  //uvec4 gridItem = texelFetch(uLightGrid, tileIndex);
+{% if USE_BUFFER_TEXTURE %}
+  int tileIndex = tileX + tilesCount.x * tileY;
+  uvec4 gridItem = texelFetch(uLightGrid, tileIndex);
+{% else %}
   uvec4 gridItem = texture(uLightGrid, vec2(float(tileX) / tileCount.x, float(tileY) / tileCount.y));
+{% endif %}
+
   uint lightOffset = gridItem.r;
   uint lightCount = gridItem.g;
   vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
 
-  //fragmentColor += vec4(lightOffset, lightCount, 0, 1.0);
-
   for (uint i = 0u; i < lightCount; i++) {
     uint currentOffset = lightOffset + i;
-    //uint lightIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+{% if USE_BUFFER_TEXTURE %}
+    uint lightIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+{% else %}
     uint lightIndex = texelFetch(uLightIndices, ivec2(currentOffset % 4096u, int(floor(float(currentOffset) / 4096.0))), 0).r;
-
+{% endif %}
     vec3 lightPosition = lights[lightIndex].position;
     vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
     float distanceToLight = length(lightDir);

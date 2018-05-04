@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 IF(EMSCRIPTEN)
 #    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS=2 --bind -s USE_WEBGL2=1 -s DEMANGLE_SUPPORT=2 -O2 --preload-file ../../resources@resources")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_WEBGL2=1 -O2 --preload-file ../../resources@resources")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind -s USE_GLFW=3 -s USE_WEBGL2=1 -O2 --preload-file ../../resources@resources")
 ENDIF(EMSCRIPTEN)
 
 #SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)
