@@ -7,6 +7,9 @@
 #include "loader/HierarchyLoader.h"
 #include <vector>
 #include "EngMath.h"
+#include "loader/TextureLoader.h"
+#include "EngTypes.h"
+#include "render/material/MaterialTypes.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -59,12 +62,20 @@ void Game::init(Engine *engine) {
   camera->transform()->position(vec3(0, 5, 15));
   camXAngle = -M_PI / 8;
 
+  auto texture1 = loader::loadTexture("resources/lama.jpg");
+  auto materialTexture1 = std::make_shared<MaterialTexture>();
+  materialTexture1->texture(texture1);
   sprite1 = CreateGameObject<Sprite>();
+  sprite1->material(materialTexture1);
   sprite1->transform()->position(vec3(0, 0, -10));
   sprite1->transform()->scale(vec3(0.3, 0.3, 0.3));
-  sprite1->materialColor()->color(vec4(1, 1, 0, 1));
+//  sprite1->materialColor()->color(vec4(1, 1, 0, 1));
 
+  auto texture2 = loader::loadTexture("resources/platform.png");
+  auto materialTexture2 = std::make_shared<MaterialTexture>();
+  materialTexture2->texture(texture2);
   sprite2 = CreateGameObject<Sprite>();
+  sprite2->material(materialTexture2);
   sprite2->transform()->position(vec3(0, 8, 0));
   sprite2->transform()->scale(vec3(2, 2, 2));
   sprite2->transform()->setParent(sprite1->transform());
@@ -125,12 +136,13 @@ void Game::_updateInput(float dt) {
 }
 
 void Game::_updateGameLogic(float dt) {
+  dt *= 0.05;
   ang += dt * PI;
 
   quat rotation(vec3(camXAngle, camYAngle, 0));
   camera->transform()->rotation(rotation);
 
-  sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
+//  sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 

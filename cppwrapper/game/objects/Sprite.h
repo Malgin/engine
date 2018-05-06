@@ -10,7 +10,7 @@
 
 class Sprite : public MeshObject {
 public:
-  Sprite();
+  explicit Sprite();
   MaterialSingleColor *materialColor() { return (MaterialSingleColor *)(_material.get()); }
 };
 

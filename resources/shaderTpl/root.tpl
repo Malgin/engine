@@ -15,9 +15,7 @@ uniform mat4 uPMatrix;
 
 {% if LIGHTING %}
 in vec3 aNormal;
-
 out vec3 vNormal_worldspace;
-//out vec3 vEyeDirection_cameraspace;
 {% endif %}
 
 in vec3 aPosition;
@@ -35,7 +33,6 @@ void main(void) {
 
 {% if LIGHTING %}
   vNormal_worldspace = normalize(transform.model * vec4(aNormal, 0)).xyz;
-  //vEyeDirection_cameraspace = vec3(0, 0, 0) - position_cameraspace.xyz; // vector to the camera
 {% endif %}
 
   gl_Position = uPMatrix * position_cameraspace;
@@ -47,7 +44,10 @@ void main(void) {
 out vec4 fragmentColor;
 
 in vec2 vTexCoord0;
+{% if TEXTURE0 %}
 uniform highp sampler2D uTexture0;
+{% endif %}
+
 {% if COLOR %}uniform vec4 uColor;{% endif %}
 
 in vec4 vPosition_worldspace;
@@ -104,7 +104,7 @@ void main(void) {
   {% if COLOR %}
   fragmentColor = uColor;
   {% else %}
-  fragmentColor = vec4(0.0, 0.0, 0.0, 1.0);
+  fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
   {% endif %}
 
 {% if LIGHTING %}
@@ -129,6 +129,7 @@ void main(void) {
   uint lightOffset = gridItem.r;
   uint lightCount = gridItem.g;
   vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
+  vec4 lightsColor = vec4(0, 0, 0, 1);
 
   for (uint i = 0u; i < lightCount; i++) {
     uint currentOffset = lightOffset + i;
@@ -142,12 +143,16 @@ void main(void) {
     float distanceToLight = length(lightDir);
     lightDir /= distanceToLight; // normalize
     vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color);
-    fragmentColor += vec4(lightValue, 1.0);
+    lightsColor += vec4(lightValue, 0.0);
   }
 
-  fragmentColor += ambient;
+  lightsColor += ambient;
+  fragmentColor *= lightsColor + ambient;
 {% endif %}
 
-  //vec4 texture0Color = texture(uTexture0, vTexCoord0);
-  //fragmentColor = texture0Color;
+{% if TEXTURE0 %}
+  vec4 texture0Color = texture(uTexture0, vTexCoord0);
+  fragmentColor *= texture0Color;
+{% endif %}
+
 }
