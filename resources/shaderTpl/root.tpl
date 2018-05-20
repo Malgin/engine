@@ -13,6 +13,17 @@ layout (std140) uniform TransformBlock {
 uniform mat4 uViewMatrix;
 uniform mat4 uPMatrix;
 
+struct Camera {
+  vec3 position;
+  uvec2 screenSize;
+  mat4 viewMatrix;
+  mat4 projectionMatrix;
+};
+
+layout (std140) uniform CameraBlock {
+  Camera camera;
+};
+
 {% if LIGHTING %}
 in vec3 aNormal;
 out vec3 vNormal_worldspace;
@@ -36,7 +47,7 @@ void main(void) {
   vTexCoord0 = aTexCoord0;
 
   vPosition_worldspace = transform.model * vec4(aPosition, 1.0);
-  vec4 position_cameraspace = uViewMatrix * vPosition_worldspace;
+  vec4 position_cameraspace = camera.viewMatrix * vPosition_worldspace;
 
 {% if LIGHTING %}
   vNormal_worldspace = normalize(transform.model * vec4(aNormal, 0)).xyz;
@@ -46,13 +57,24 @@ void main(void) {
   vBitangent_worldspace = normalize(transform.model * vec4(aBitangent, 0)).xyz;
 {% endif %}
 
-  gl_Position = uPMatrix * position_cameraspace;
+  gl_Position = camera.projectionMatrix * position_cameraspace;
 }
 
 [fragment]
 #version {{ version }}
 {% if WEBGL %}precision highp float; precision highp int;{% endif %}
 out vec4 fragmentColor;
+
+struct Camera {
+  vec3 position;
+  uvec2 screenSize;
+  mat4 viewMatrix;
+  mat4 projectionMatrix;
+};
+
+layout (std140) uniform CameraBlock {
+  Camera camera;
+};
 
 in vec2 vTexCoord0;
 {% if TEXTURE0 %}
@@ -62,6 +84,7 @@ uniform highp sampler2D uTexture0;
 {% if COLOR %}uniform vec4 uColor;{% endif %}
 in vec4 vPosition_worldspace;
 
+{% if PROJECTED_TEXTURE %}{{ projectedTexture("FRAGMENT_UNIFORM_DECLARE") }}{% endif %}
 {% if TERRAIN_LAYER0 %}{{ terrain("FRAGMENT_UNIFORM_DECLARE") }}{% endif %}
 
 {% if LIGHTING %}
@@ -76,11 +99,13 @@ in vec3 vBitangent_worldspace;
 void main(void) {
 {% if COLOR %}
   fragmentColor = uColor;
+  //fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 {% else %}
   fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 {% endif %}
 
 {% if TERRAIN_LAYER0 %}{{ terrain("FRAGMENT_MAIN") }}{% endif %}
+{% if PROJECTED_TEXTURE %}{{ projectedTexture("FRAGMENT_MAIN") }}{% endif %}
 
 {% if NORMAL_MAP %}
   mat3 TBN = mat3(
@@ -102,5 +127,7 @@ void main(void) {
   vec4 texture0Color = texture(uTexture0, vTexCoord0);
   fragmentColor *= texture0Color;
 {% endif %}
+
+//fragmentColor = vec4(1,1,1,1);
 
 }

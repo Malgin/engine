@@ -23,14 +23,19 @@ TerrainPtr terrain;
 LightObjectPtr light;
 LightObjectPtr light2;
 GameObjectPtr lightRing1;
+MaterialTextureProjectionPtr materialTexProj;
 
 float ang = 0;
 float camXAngle = 0;
 float camYAngle = 0;
 ModelBundlePtr bundle;
 
+
 void Game::init(Engine *engine) {
   _engine = engine;
+
+  materialTexProj = std::make_shared<MaterialTextureProjection>();
+  materialTexProj->projectedTexture(loader::loadTexture("resources/common/decal.png"));
 
   terrain = CreateGameObject<Terrain>();
   terrain->loadHeightmap("resources/terrain/terrain.raw");
@@ -41,10 +46,14 @@ void Game::init(Engine *engine) {
   terrain->addTextures("resources/terrain/snow_mntn2_d.jpg", "resources/terrain/snow_mntn2_n.jpg");
   terrain->loadSplatmap("resources/terrain/splatmap.png");
   terrain->loadSpecularmap("resources/terrain/specular.jpg");
-  terrain->transform()->position(vec3(-15,-2,-15));
+  terrain->transform()->position(vec3(-15, 0,-15));
+
 
   bundle = Resources::loadModel("resources/models/group.mdl");
-  rootObj = loader::loadHierarchy(bundle);
+  loader::MaterialPicker texProjPicker(materialTexProj);
+//  loader::MaterialPicker texProjPicker(std::make_shared<MaterialLighting>());
+  rootObj = loader::loadHierarchy(bundle, nullptr, &texProjPicker);
+//  rootObj = loader::loadHierarchy(bundle, nullptr, nullptr);
   rootObj->transform()->position(vec3(0, 3, 0));
 
   light = CreateGameObject<LightObject>();
@@ -61,7 +70,7 @@ void Game::init(Engine *engine) {
 
   lightRing1 = CreateGameObject<GameObject>();
   lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
-  lightRing1->transform()->position(vec3(1.2, 1, 1));
+  lightRing1->transform()->position(vec3(1.2, 3, 1));
   int ringCount = 2;
 //  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
@@ -80,6 +89,7 @@ void Game::init(Engine *engine) {
   camera->transform()->position(vec3(0, 5, 15));
   camXAngle = -M_PI / 8;
 
+
   auto texture1 = loader::loadTexture("resources/lama.jpg");
   auto materialTexture1 = std::make_shared<MaterialTexture>();
   materialTexture1->texture(texture1);
@@ -87,7 +97,6 @@ void Game::init(Engine *engine) {
   sprite1->material(materialTexture1);
   sprite1->transform()->position(vec3(0, 0, -10));
   sprite1->transform()->scale(vec3(0.3, 0.3, 0.3));
-//  sprite1->materialColor()->color(vec4(1, 1, 0, 1));
 
   auto texture2 = loader::loadTexture("resources/platform.png");
   auto materialTexture2 = std::make_shared<MaterialTexture>();
@@ -142,8 +151,12 @@ void Game::_updateInput(float dt) {
   }
 
   if (input->keyDown(Key::Space)) {
+    mat4 projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
+    projMatrix *= camera->viewMatrix();
 
-    light->transform()->position(camera->transform()->position() + camera->transform()->forward() * 2.5f);
+    materialTexProj->projectedTextureMatrix(projMatrix);
+
+//    light->transform()->position(camera->transform()->position() + camera->transform()->forward() * 2.5f);
 //    rootObj->transform()->rotate(vec3(0, 0, 1), dt * PI);
   }
 
@@ -166,6 +179,6 @@ void Game::_updateGameLogic(float dt) {
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
-//  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
-  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
+  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
+//  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
 }

@@ -43,6 +43,7 @@
 {% endif %}
 
 {% if MODE == "FRAGMENT_UNIFORM_DECLARE" %}
+// Uniform ////////////////
 {% if USE_BUFFER_TEXTURE %}
 uniform usamplerBuffer uLightGrid;
 uniform usamplerBuffer uLightIndices;
@@ -59,17 +60,6 @@ struct Light {
 
 layout (std140) uniform LightBlock {
   Light lights[100];
-};
-
-
-struct Camera {
-  vec3 position;
-  uvec2 screenSize;
-};
-
-
-layout (std140) uniform CameraBlock {
-  Camera camera;
 };
 
 in vec3 vNormal_worldspace;
