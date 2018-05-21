@@ -30,6 +30,7 @@ float camXAngle = 0;
 float camYAngle = 0;
 ModelBundlePtr bundle;
 
+mat4 projMatrix;
 
 void Game::init(Engine *engine) {
   _engine = engine;
@@ -151,7 +152,7 @@ void Game::_updateInput(float dt) {
   }
 
   if (input->keyDown(Key::Space)) {
-    mat4 projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
+    projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
     projMatrix *= camera->viewMatrix();
 
     materialTexProj->projectedTextureMatrix(projMatrix);
@@ -181,4 +182,7 @@ void Game::_updateGameLogic(float dt) {
 
   light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
 //  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
+
+  auto debugDraw = getEngine()->debugDraw();
+  debugDraw->drawFrustum(projMatrix);
 }

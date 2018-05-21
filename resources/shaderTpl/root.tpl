@@ -36,6 +36,8 @@ in vec3 aBitangent;
 out vec3 vBitangent_worldspace;
 {% endif %}
 
+{% if VERTEX_COLOR %}{{ vertexColor("VERTEX_ATTRIBUTES_DECLARE") }}{% endif %}
+
 in vec3 aPosition;
 in vec2 aTexCoord0;
 out vec2 vTexCoord0;
@@ -45,6 +47,8 @@ void main(void) {
   gl_PointSize = 5.0;
 
   vTexCoord0 = aTexCoord0;
+
+{% if VERTEX_COLOR %}{{ vertexColor("VERTEX_MAIN") }}{% endif %}
 
   vPosition_worldspace = transform.model * vec4(aPosition, 1.0);
   vec4 position_cameraspace = camera.viewMatrix * vPosition_worldspace;
@@ -76,6 +80,7 @@ layout (std140) uniform CameraBlock {
   Camera camera;
 };
 
+{% if VERTEX_COLOR %}{{ vertexColor("FRAGMENT_ATTRIBUTES_DECLARE") }}{% endif %}
 in vec2 vTexCoord0;
 {% if TEXTURE0 %}
 uniform highp sampler2D uTexture0;
@@ -99,11 +104,11 @@ in vec3 vBitangent_worldspace;
 void main(void) {
 {% if COLOR %}
   fragmentColor = uColor;
-  //fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 {% else %}
   fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 {% endif %}
 
+{% if VERTEX_COLOR %}{{ vertexColor("FRAGMENT_MAIN") }}{% endif %}
 {% if TERRAIN_LAYER0 %}{{ terrain("FRAGMENT_MAIN") }}{% endif %}
 {% if PROJECTED_TEXTURE %}{{ projectedTexture("FRAGMENT_MAIN") }}{% endif %}
 
@@ -127,7 +132,5 @@ void main(void) {
   vec4 texture0Color = texture(uTexture0, vTexCoord0);
   fragmentColor *= texture0Color;
 {% endif %}
-
-//fragmentColor = vec4(1,1,1,1);
 
 }
