@@ -5,7 +5,8 @@ out vec4 vVertexColor;
 
 {% if MODE == "VERTEX_MAIN" %}
   vVertexColor = aVertexColor;
-{% if POINT_SIZE %}  gl_PointSize = aVertexColor.a;{% endif %}
+{% if POINT_SIZE %}  gl_PointSize = aVertexColor.a;
+  vVertexColor.a = 1.0;{% endif %}
 {% endif %}
 
 {% if MODE == "FRAGMENT_ATTRIBUTES_DECLARE" %}

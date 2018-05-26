@@ -23,6 +23,7 @@ TerrainPtr terrain;
 LightObjectPtr light;
 LightObjectPtr light2;
 GameObjectPtr lightRing1;
+LightObjectPtr flashLight;
 MaterialTextureProjectionPtr materialTexProj;
 
 float ang = 0;
@@ -49,7 +50,6 @@ void Game::init(Engine *engine) {
   terrain->loadSpecularmap("resources/terrain/specular.jpg");
   terrain->transform()->position(vec3(-15, 0,-15));
 
-
   bundle = Resources::loadModel("resources/models/group.mdl");
   loader::MaterialPicker texProjPicker(materialTexProj);
 //  loader::MaterialPicker texProjPicker(std::make_shared<MaterialLighting>());
@@ -59,7 +59,7 @@ void Game::init(Engine *engine) {
 
   light = CreateGameObject<LightObject>();
   light->transform()->position(vec3(0, 4, 0));
-  light->radius(14);
+  light->radius(15);
   light->color(vec3(1, 1, 1));
   light->enableDebug();
 
@@ -78,9 +78,12 @@ void Game::init(Engine *engine) {
     auto lightInRing = CreateGameObject<LightObject>();
     float ang = M_PI * 2 * i / ringCount;
     lightInRing->transform()->position(vec3(cosf(ang) * 7, 0, sinf(ang) * 7));
+    lightInRing->type(LightObjectType::Spot);
+    lightInRing->coneAngle(30);
+    lightInRing->transform()->rotate(vec3(1, 0, 0), -M_PI / 4.0f);
 //    lightInRing->radius(7);
 //    lightInRing->color(i % 2 == 0 ? vec3(0, 1, 1) : vec3(0.8, 0.2, 0.5));
-    lightInRing->radius(45);
+    lightInRing->radius(15);
     lightInRing->color(vec3(1,1,1));
     lightInRing->enableDebug();
     lightInRing->transform()->parent(lightRing1->transform());
@@ -90,6 +93,13 @@ void Game::init(Engine *engine) {
   camera->transform()->position(vec3(0, 5, 15));
   camXAngle = -M_PI / 8;
 
+  flashLight = CreateGameObject<LightObject>();
+  flashLight->transform()->parent(camera->transform());
+  flashLight->type(LightObjectType::Spot);
+  flashLight->coneAngle(50);
+  flashLight->radius(13);
+  flashLight->transform()->position(vec3(0,0,-0.1));
+//  flashLight->enableDebug();
 
   auto texture1 = loader::loadTexture("resources/lama.jpg");
   auto materialTexture1 = std::make_shared<MaterialTexture>();
@@ -181,8 +191,11 @@ void Game::_updateGameLogic(float dt) {
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
   light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
-//  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
+  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
 
   auto debugDraw = getEngine()->debugDraw();
   debugDraw->drawFrustum(projMatrix);
+
+  OBB obb(vec3(10, 0, 5), vec3(6, 3, 1));
+  debugDraw->drawOBB(obb, vec4(0, 0, 1, 1));
 }

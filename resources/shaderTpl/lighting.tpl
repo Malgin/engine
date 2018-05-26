@@ -19,11 +19,13 @@
 {% endif %}
 
   uint lightOffset = gridItem.r;
-  uint lightCount = gridItem.g;
+  uint pointLightCount = gridItem.g & 0x000fffu;
+  uint spotLightCount = gridItem.g >> 16;
   vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
   vec4 lightsColor = vec4(0, 0, 0, 1);
 
-  for (uint i = 0u; i < lightCount; i++) {
+  // Point light
+  for (uint i = 0u; i < pointLightCount; i++) {
     uint currentOffset = lightOffset + i;
 {% if USE_BUFFER_TEXTURE %}
     uint lightIndex = texelFetch(uLightIndices, int(currentOffset)).r;
@@ -36,6 +38,28 @@
     lightDir /= distanceToLight; // normalize
     vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
     lightsColor += vec4(lightValue, 0.0);
+  }
+
+  // Spot lights
+  for (uint i = 0u; i < spotLightCount; i++) {
+    uint currentOffset = lightOffset + i + pointLightCount;
+{% if USE_BUFFER_TEXTURE %}
+    uint lightIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+{% else %}
+    uint lightIndex = texelFetch(uLightIndices, ivec2(currentOffset % 4096u, int(floor(float(currentOffset) / 4096.0))), 0).r;
+{% endif %}
+    vec3 lightPosition = lights[lightIndex].position;
+    vec3 coneDirection = lights[lightIndex].direction;
+    float coneAngle = lights[lightIndex].coneAngle;
+
+    vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
+    float distanceToLight = length(lightDir);
+    lightDir /= distanceToLight; // normalize
+    float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
+    if (lightToSurfaceAngle < coneAngle){
+      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+      lightsColor += vec4(lightValue, 0.0);
+    }
   }
 
   lightsColor += ambient;
@@ -56,6 +80,8 @@ struct Light {
   vec3 position;
   float attenuation;
   vec3 color;
+  vec3 direction;
+  float coneAngle;
 };
 
 layout (std140) uniform LightBlock {
@@ -63,8 +89,7 @@ layout (std140) uniform LightBlock {
 };
 
 in vec3 vNormal_worldspace;
-//in vec3 vEyeDirection_cameraspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.0;
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.3;
 
 vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
