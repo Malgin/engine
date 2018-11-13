@@ -1,0 +1,68 @@
+{"frames": [
+
+{
+	"filename": "dec1.png",
+	"frame": {"x":1,"y":1,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "dec1_n.png",
+	"frame": {"x":1,"y":515,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "dec2.png",
+	"frame": {"x":515,"y":1,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "dec2_n.png",
+	"frame": {"x":515,"y":515,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "dec3.png",
+	"frame": {"x":1029,"y":1,"w":529,"h":419},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":529,"h":419},
+	"sourceSize": {"w":529,"h":419}
+},
+{
+	"filename": "dec3_n.png",
+	"frame": {"x":1029,"y":422,"w":529,"h":419},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":529,"h":419},
+	"sourceSize": {"w":529,"h":419}
+},
+{
+	"filename": "decal.png",
+	"frame": {"x":1029,"y":843,"w":237,"h":252},
+	"rotated": true,
+	"trimmed": true,
+	"spriteSourceSize": {"x":7,"y":1,"w":237,"h":252},
+	"sourceSize": {"w":256,"h":256}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "decals.png",
+	"format": "RGBA8888",
+	"size": {"w":1559,"h":1081},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:a4ac56563b83e906125942c8b2cd66ea:13ed7d4b01f5112740436f855e7b2b0d:0d0818806965f5213550c37931ccf0cc$"
+}
+}

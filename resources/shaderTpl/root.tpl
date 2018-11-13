@@ -119,12 +119,13 @@ void main(void) {
     vNormal_worldspace
   );
   // normal_tangentspace should be defined BEFORE (fetch the normal map sampler)
-  vec3 normal_worldspace = normalize(transpose(TBN) * normal_tangentspace);
+  vec3 normal_worldspace = normalize(TBN * normal_tangentspace);
 {% else %}
 {% if LIGHTING %}  vec3 normal_worldspace = normalize(vNormal_worldspace);{% endif %}
 {% endif %}
 
 {% if LIGHTING %}
+  //fragmentColor = vec4((normal_worldspace + 0.5) / 2.0, 1);
 {{ lighting("FRAGMENT_MAIN") }}
 {% endif %}
 

@@ -9,6 +9,7 @@
 #include <vector>
 #include "EngMath.h"
 #include "loader/TextureLoader.h"
+#include "loader/SpritesheetLoader.h"
 #include "EngTypes.h"
 #include "render/material/MaterialTypes.h"
 
@@ -19,6 +20,8 @@ std::shared_ptr<Sprite> sprite3;
 CameraPtr camera;
 
 TerrainPtr terrain;
+
+SpriteSheetPtr spritesheet;
 
 LightObjectPtr light;
 LightObjectPtr light2;
@@ -35,6 +38,8 @@ mat4 projMatrix;
 
 void Game::init(Engine *engine) {
   _engine = engine;
+
+  spritesheet = loader::loadSpritesheet("resources/common/decals.json");
 
   materialTexProj = std::make_shared<MaterialTextureProjection>();
   materialTexProj->projectedTexture(loader::loadTexture("resources/common/decal.png"));
@@ -72,19 +77,19 @@ void Game::init(Engine *engine) {
   lightRing1 = CreateGameObject<GameObject>();
   lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
   lightRing1->transform()->position(vec3(1.2, 3, 1));
-  int ringCount = 2;
+  int ringCount = 8;
 //  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
     auto lightInRing = CreateGameObject<LightObject>();
     float ang = M_PI * 2 * i / ringCount;
     lightInRing->transform()->position(vec3(cosf(ang) * 7, 0, sinf(ang) * 7));
-    lightInRing->type(LightObjectType::Spot);
+    lightInRing->type(i % 2 == 0 ? LightObjectType::Point : LightObjectType::Spot);
     lightInRing->coneAngle(30);
     lightInRing->transform()->rotate(vec3(1, 0, 0), -M_PI / 4.0f);
 //    lightInRing->radius(7);
-//    lightInRing->color(i % 2 == 0 ? vec3(0, 1, 1) : vec3(0.8, 0.2, 0.5));
+    lightInRing->color(i % 2 == 0 ? vec3(0, 1, 1) : vec3(0.8, 0.2, 0.5));
     lightInRing->radius(15);
-    lightInRing->color(vec3(1,1,1));
+//    lightInRing->color(vec3(1,1,1));
     lightInRing->enableDebug();
     lightInRing->transform()->parent(lightRing1->transform());
   }

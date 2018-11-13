@@ -47,9 +47,12 @@ uniform highp sampler2D uTerrainSplatmap;
   fragmentColor *= terrainDiffuse0;
 {% endif %}
 
-{% if NORMAL_MAP %}  normal_tangentspace = normal_tangentspace * 2.0 - 1.0;
+
+{% if NORMAL_MAP %}
+//normal_tangentspace = vec3(0.5, 0.5, 1);
+normal_tangentspace = normal_tangentspace * 2.0 - 1.0;
   // Need inverted z for correct lighting
-  normal_tangentspace.z *= -1.0;{% endif %}
+  //normal_tangentspace.z *= -1.0;{% endif %}
 {% endif %}
 
 // END TERRAIN ////////////////////////////////////
