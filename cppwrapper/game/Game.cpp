@@ -80,6 +80,8 @@ void Game::init(Engine *engine) {
   int ringCount = 8;
 //  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
+//    if (i % 2 != 0) continue;
+
     auto lightInRing = CreateGameObject<LightObject>();
     float ang = M_PI * 2 * i / ringCount;
     lightInRing->transform()->position(vec3(cosf(ang) * 7, 0, sinf(ang) * 7));
@@ -191,7 +193,7 @@ void Game::_updateGameLogic(float dt) {
   quat rotation(vec3(camXAngle, camYAngle, 0));
   camera->transform()->rotation(rotation);
 
-//  sprite2->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
+  sprite3->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
@@ -201,6 +203,8 @@ void Game::_updateGameLogic(float dt) {
   auto debugDraw = getEngine()->debugDraw();
   debugDraw->drawFrustum(projMatrix);
 
-  OBB obb(vec3(10, 0, 5), vec3(6, 3, 1));
-  debugDraw->drawOBB(obb, vec4(0, 0, 1, 1));
+//  OBB obb(vec3(10, 0, 5), vec3(6, 3, 1));
+//  debugDraw->drawOBB(obb, vec4(0, 0, 1, 1));
+//  auto debugDraw = getEngine()->debugDraw();
+//  debugDraw->drawFrustum(projMatrix);
 }
