@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "objects/Sprite.h"
 #include "objects/Terrain.h"
+#include "objects/Projector.h"
 #include "loader/HierarchyLoader.h"
 #include <vector>
 #include "EngMath.h"
@@ -12,6 +13,9 @@
 #include "loader/SpritesheetLoader.h"
 #include "EngTypes.h"
 #include "render/material/MaterialTypes.h"
+#include "objects/Camera.h"
+#include "objects/LightObject.h"
+#include "render/renderer/Renderer.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -28,6 +32,7 @@ LightObjectPtr light2;
 GameObjectPtr lightRing1;
 LightObjectPtr flashLight;
 MaterialTextureProjectionPtr materialTexProj;
+//ProjectorPtr projector;
 
 float ang = 0;
 float camXAngle = 0;
@@ -35,14 +40,26 @@ float camYAngle = 0;
 ModelBundlePtr bundle;
 
 mat4 projMatrix;
+double drawTime = 0;
 
 void Game::init(Engine *engine) {
   _engine = engine;
 
-  spritesheet = loader::loadSpritesheet("resources/common/decals.json");
+  camera = CreateGameObject<Camera>();
+  camera->transform()->position(vec3(0, 5, 15));
+  camXAngle = -M_PI / 8;
 
-  materialTexProj = std::make_shared<MaterialTextureProjection>();
-  materialTexProj->projectedTexture(loader::loadTexture("resources/common/decal.png"));
+  spritesheet = loader::loadSpritesheet("resources/common/decals.json");
+  auto projectorTexture = loader::loadTexture("resources/common/decal.png");
+  engine->renderer()->projectorTexture(projectorTexture);
+
+//  materialTexProj = std::make_shared<MaterialTextureProjection>();
+//  materialTexProj->projectedTexture(projectorTexture );
+
+//  projector = CreateGameObject<Projector>();
+//  projector->type(ProjectorType::Projection);
+//  projector->setDebugEnabled(true);
+//  projector->zFar(3);
 
   terrain = CreateGameObject<Terrain>();
   terrain->loadHeightmap("resources/terrain/terrain.raw");
@@ -52,14 +69,14 @@ void Game::init(Engine *engine) {
   terrain->addTextures("resources/terrain/snow2_d.jpg", "resources/terrain/snow2_n.jpg");
   terrain->addTextures("resources/terrain/snow_mntn2_d.jpg", "resources/terrain/snow_mntn2_n.jpg");
   terrain->loadSplatmap("resources/terrain/splatmap.png");
-  terrain->loadSpecularmap("resources/terrain/specular.jpg");
+//  terrain->loadSpecularmap("resources/terrain/specular.jpg");
   terrain->transform()->position(vec3(-15, 0,-15));
 
   bundle = Resources::loadModel("resources/models/group.mdl");
-  loader::MaterialPicker texProjPicker(materialTexProj);
-//  loader::MaterialPicker texProjPicker(std::make_shared<MaterialLighting>());
-  rootObj = loader::loadHierarchy(bundle, nullptr, &texProjPicker);
-//  rootObj = loader::loadHierarchy(bundle, nullptr, nullptr);
+//  loader::MaterialPicker texProjPicker(materialTexProj);
+  loader::MaterialPicker texProjPicker(std::make_shared<MaterialLighting>());
+//  rootObj = loader::loadHierarchy(bundle, nullptr, &texProjPicker);
+  rootObj = loader::loadHierarchy(bundle, nullptr, nullptr);
   rootObj->transform()->position(vec3(0, 3, 0));
 
   light = CreateGameObject<LightObject>();
@@ -95,10 +112,6 @@ void Game::init(Engine *engine) {
     lightInRing->enableDebug();
     lightInRing->transform()->parent(lightRing1->transform());
   }
-
-  camera = CreateGameObject<Camera>();
-  camera->transform()->position(vec3(0, 5, 15));
-  camXAngle = -M_PI / 8;
 
   flashLight = CreateGameObject<LightObject>();
   flashLight->transform()->parent(camera->transform());
@@ -169,13 +182,34 @@ void Game::_updateInput(float dt) {
   }
 
   if (input->keyDown(Key::Space)) {
-    projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
-    projMatrix *= camera->viewMatrix();
+//    projector->transform()->position(camera->transform()->position());
+//    projector->transform()->rotation(camera->transform()->rotation());
 
-    materialTexProj->projectedTextureMatrix(projMatrix);
+//    projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
+//    projMatrix = glm::perspective(RAD(30), 1.0f, 1.0f, 4.0f);
+//    projMatrix *= camera->viewMatrix();
+      projMatrix = camera->viewProjectionMatrix();
+//
+//    materialTexProj->projectedTextureMatrix(projMatrix);
 
 //    light->transform()->position(camera->transform()->position() + camera->transform()->forward() * 2.5f);
 //    rootObj->transform()->rotate(vec3(0, 0, 1), dt * PI);
+  }
+
+  if (input->keyDown(Key::C) && getEngine()->time() - drawTime > 0.3) {
+    auto proj = CreateGameObject<Projector>();
+    drawTime = getEngine()->time();
+    proj->setDebugEnabled(true);
+    proj->type(ProjectorType::Projection);
+    proj->zFar(3);
+    proj->orthographicSize(1);
+    proj->transform()->position(camera->transform()->position());
+    proj->transform()->rotation(camera->transform()->rotation());
+  }
+
+  if (input->keyDown(Key::MouseLeft)) {
+    camXAngle -= input->mouseDelta().y * 0.008;
+    camYAngle -= input->mouseDelta().x * 0.008;
   }
 
   if (input->keyDown(Key::MouseLeft)) {
@@ -197,14 +231,14 @@ void Game::_updateGameLogic(float dt) {
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
 
-  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
-  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
+//  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
+//  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
 
-  auto debugDraw = getEngine()->debugDraw();
-  debugDraw->drawFrustum(projMatrix);
+//  auto debugDraw = getEngine()->debugDraw();
+//  debugDraw->drawFrustum(projMatrix, glm::vec4(1, 1, 0, 1));
 
 //  OBB obb(vec3(10, 0, 5), vec3(6, 3, 1));
-//  debugDraw->drawOBB(obb, vec4(0, 0, 1, 1));
+//  debugDraw->drawOBB(obb, vec4(1, 0, 1, 1));
 //  auto debugDraw = getEngine()->debugDraw();
 //  debugDraw->drawFrustum(projMatrix);
 }

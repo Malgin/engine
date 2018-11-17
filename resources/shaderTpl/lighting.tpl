@@ -21,6 +21,8 @@
   uint lightOffset = gridItem.r;
   uint pointLightCount = gridItem.g & 0x000fffu;
   uint spotLightCount = gridItem.g >> 16;
+  uint projectorCount = gridItem.b & 0x000fffu;
+  uint decalCount = gridItem.b >> 16;
   vec3 eyeDir_worldspace = normalize(camera.position - vPosition_worldspace.xyz); // vector to camera
   vec4 lightsColor = vec4(0, 0, 0, 1);
 
@@ -56,9 +58,29 @@
     float distanceToLight = length(lightDir);
     lightDir /= distanceToLight; // normalize
     float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
-    if (lightToSurfaceAngle < coneAngle){
+    if (lightToSurfaceAngle < coneAngle) {
       vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
       lightsColor += vec4(lightValue, 0.0);
+    }
+  }
+
+  // Projectors
+  for (uint i = 0u; i < projectorCount; i++) {
+    uint currentOffset = lightOffset + i + pointLightCount + spotLightCount;
+    {% if USE_BUFFER_TEXTURE %}
+        uint projectorIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+    {% else %}
+        uint projectorIndex = texelFetch(uLightIndices, ivec2(currentOffset % 4096u, int(floor(float(currentOffset) / 4096.0))), 0).r;
+    {% endif %}
+
+    vec4 projectedTextureUV = projectors[projectorIndex].projectionMatrix * vPosition_worldspace;
+    projectedTextureUV /= projectedTextureUV.w;
+    projectedTextureUV = (projectedTextureUV + 1.0) / 2.0;
+    if (projectedTextureUV.x >= 0.0 && projectedTextureUV.x < 1.0
+        && projectedTextureUV.y >= 0.0 && projectedTextureUV.y < 1.0
+        && projectedTextureUV.z >= 0.0 && projectedTextureUV.z < 1.0) {
+      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy);
+      fragmentColor *= projectedTexture;
     }
   }
 
@@ -76,6 +98,8 @@ uniform highp usampler2D uLightGrid;
 uniform highp usampler2D uLightIndices;
 {% endif %}
 
+uniform highp sampler2D uProjectorTexture;
+
 struct Light {
   vec3 position;
   float attenuation;
@@ -86,6 +110,19 @@ struct Light {
 
 layout (std140) uniform LightBlock {
   Light lights[100];
+};
+
+struct Projector {
+  vec3 position;
+  float attenuation;
+  vec4 color;
+  vec2 scale;
+  vec2 offset;
+  mat4 projectionMatrix;
+};
+
+layout (std140) uniform ProjectorBlock {
+  Projector projectors[100];
 };
 
 in vec3 vNormal_worldspace;
