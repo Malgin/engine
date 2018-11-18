@@ -61,10 +61,14 @@
     vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
     float distanceToLight = length(lightDir);
     lightDir /= distanceToLight; // normalize
-    float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
-    if (lightToSurfaceAngle < coneAngle) {
+    float lightToSurfaceAngle = dot(lightDir, coneDirection);
+    float innerLightToSurfaceAngle = lightToSurfaceAngle * 1.03;
+    float epsilon = innerLightToSurfaceAngle - lightToSurfaceAngle;
+
+    if (lightToSurfaceAngle > coneAngle) {
       vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
-      lightsColor += vec4(lightValue, 0.0);
+      float intensity = clamp((lightToSurfaceAngle - coneAngle) / epsilon, 0.0, 1.0);
+      lightsColor += vec4(lightValue * intensity, 0.0);
     }
   }
 
@@ -83,7 +87,8 @@
     if (projectedTextureUV.x >= 0.0 && projectedTextureUV.x < 1.0
         && projectedTextureUV.y >= 0.0 && projectedTextureUV.y < 1.0
         && projectedTextureUV.z >= 0.0 && projectedTextureUV.z < 1.0) {
-      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy) * projectors[projectorIndex].color;
+      vec2 spritesheetUV = projectedTextureUV.xy * projectors[projectorIndex].scale + projectors[projectorIndex].offset;
+      vec4 projectedTexture = texture(uProjectorTexture, spritesheetUV) * projectors[projectorIndex].color;
 
       vec3 lightPosition = projectors[projectorIndex].position;
       float linearAttenuation = projectors[projectorIndex].linearAttenuation;
@@ -113,7 +118,8 @@
     if (projectedTextureUV.x >= 0.0 && projectedTextureUV.x < 1.0
         && projectedTextureUV.y >= 0.0 && projectedTextureUV.y < 1.0
         && projectedTextureUV.z >= 0.0 && projectedTextureUV.z < 1.0) {
-      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy) * projectors[projectorIndex].color;
+      vec2 spritesheetUV = projectedTextureUV.xy * projectors[projectorIndex].scale + projectors[projectorIndex].offset;
+      vec4 projectedTexture = texture(uProjectorTexture, spritesheetUV) * projectors[projectorIndex].color;
       fragmentColor = vec4(mix(fragmentColor.rgb, projectedTexture.rgb, projectedTexture.a), fragmentColor.a);
     }
   }

@@ -41,6 +41,7 @@ ModelBundlePtr bundle;
 
 mat4 projMatrix;
 double drawTime = 0;
+int decalIndex = 0;
 
 void Game::init(Engine *engine) {
   _engine = engine;
@@ -50,7 +51,7 @@ void Game::init(Engine *engine) {
   camXAngle = -M_PI / 8;
 
   spritesheet = loader::loadSpritesheet("resources/common/decals.json");
-  auto projectorTexture = loader::loadTexture("resources/common/flashlight.jpg", true);
+  auto projectorTexture = loader::loadTexture("resources/common/" + spritesheet->spritesheetName(), true);
   engine->renderer()->projectorTexture(projectorTexture);
 
 //  materialTexProj = std::make_shared<MaterialTextureProjection>();
@@ -113,15 +114,15 @@ void Game::init(Engine *engine) {
     lightInRing->transform()->parent(lightRing1->transform());
   }
 
-//  flashLight = CreateGameObject<Projector>();
-//  flashLight->transform()->parent(camera->transform());
-//  flashLight->type(ProjectorType::Projection);
-//  flashLight->zFar(40);
-//  flashLight->zNear(0.05);
-//  flashLight->attenuation(0.0, 0.1);
-//  flashLight->fov(50);
-//  flashLight->transform()->position(vec3(0,0,-0.1));
-//  flashLight->enableDebug();
+  flashLight = CreateGameObject<Projector>();
+  flashLight->transform()->parent(camera->transform());
+  flashLight->type(ProjectorType::Projection);
+  flashLight->zFar(40);
+  flashLight->zNear(0.05);
+  flashLight->attenuation(0.0, 0.1);
+  flashLight->fov(50);
+  flashLight->transform()->position(vec3(0,0,-0.1));
+  flashLight->spriteBounds(spritesheet->getSpriteData("flashlight").bounds);
 
   auto texture1 = loader::loadTexture("resources/lama.jpg");
   auto materialTexture1 = std::make_shared<MaterialTexture>();
@@ -203,9 +204,13 @@ void Game::_updateInput(float dt) {
     auto proj = CreateGameObject<Projector>();
     drawTime = getEngine()->time();
     proj->setDebugEnabled(true);
-    proj->type(ProjectorType::Projection);
+    proj->type(ProjectorType::Decal);
     proj->zFar(3);
     proj->orthographicSize(1);
+    proj->isOrthographic(true);
+    std::string decalName = spritesheet->spriteNames()[decalIndex++]; decalIndex %= spritesheet->spriteNames().size();
+    if (decalName == "flashlight") { decalName = spritesheet->spriteNames()[decalIndex++]; decalIndex %= spritesheet->spriteNames().size(); }
+    proj->spriteBounds(spritesheet->getSpriteData(decalName).bounds);
     proj->transform()->position(camera->transform()->position());
     proj->transform()->rotation(camera->transform()->rotation());
   }
