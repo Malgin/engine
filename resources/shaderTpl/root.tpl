@@ -134,4 +134,7 @@ void main(void) {
   fragmentColor *= texture0Color;
 {% endif %}
 
+// Gamma correction
+  float gamma = 2.2;
+  fragmentColor.rgb = pow(fragmentColor.rgb, vec3(1.0/gamma));
 }

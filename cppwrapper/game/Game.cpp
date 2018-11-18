@@ -50,7 +50,7 @@ void Game::init(Engine *engine) {
   camXAngle = -M_PI / 8;
 
   spritesheet = loader::loadSpritesheet("resources/common/decals.json");
-  auto projectorTexture = loader::loadTexture("resources/common/flashlight.jpg");
+  auto projectorTexture = loader::loadTexture("resources/common/flashlight.jpg", true);
   engine->renderer()->projectorTexture(projectorTexture);
 
 //  materialTexProj = std::make_shared<MaterialTextureProjection>();
@@ -81,7 +81,7 @@ void Game::init(Engine *engine) {
 
 //  light = CreateGameObject<LightObject>();
 //  light->transform()->position(vec3(0, 4, 0));
-//  light->radius(15);
+//  light->attenuation(0.0, 0.9);
 //  light->color(vec3(1, 1, 1));
 //  light->enableDebug();
 
@@ -94,8 +94,8 @@ void Game::init(Engine *engine) {
   lightRing1 = CreateGameObject<GameObject>();
   lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
   lightRing1->transform()->position(vec3(1.2, 3, 1));
-//  int ringCount = 8;
-  int ringCount = 0;
+  int ringCount = 8;
+//  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
 //    if (i % 2 != 0) continue;
 
@@ -107,21 +107,20 @@ void Game::init(Engine *engine) {
     lightInRing->transform()->rotate(vec3(1, 0, 0), -M_PI / 4.0f);
 //    lightInRing->radius(7);
     lightInRing->color(i % 2 == 0 ? vec3(0, 1, 1) : vec3(0.8, 0.2, 0.5));
-    lightInRing->radius(15);
+//    lightInRing->radius(15);
 //    lightInRing->color(vec3(1,1,1));
     lightInRing->enableDebug();
     lightInRing->transform()->parent(lightRing1->transform());
   }
 
-  flashLight = CreateGameObject<Projector>();
-  flashLight->transform()->parent(camera->transform());
-  flashLight->type(ProjectorType::Projection);
-//  flashLight->coneAngle(50);
-  flashLight->zFar(20);
-  flashLight->zNear(0.05);
-  flashLight->adjustAttenuation();
-  flashLight->fov(50);
-  flashLight->transform()->position(vec3(0,0,-0.1));
+//  flashLight = CreateGameObject<Projector>();
+//  flashLight->transform()->parent(camera->transform());
+//  flashLight->type(ProjectorType::Projection);
+//  flashLight->zFar(40);
+//  flashLight->zNear(0.05);
+//  flashLight->attenuation(0.0, 0.1);
+//  flashLight->fov(50);
+//  flashLight->transform()->position(vec3(0,0,-0.1));
 //  flashLight->enableDebug();
 
   auto texture1 = loader::loadTexture("resources/lama.jpg");
@@ -183,6 +182,7 @@ void Game::_updateInput(float dt) {
   if (input->keyDown(Key::Q)) {
     posDelta += camera->transform()->down();
   }
+
 
   if (input->keyDown(Key::Space)) {
 //    projector->transform()->position(camera->transform()->position());

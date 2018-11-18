@@ -38,7 +38,9 @@
     vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
     float distanceToLight = length(lightDir);
     lightDir /= distanceToLight; // normalize
-    vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+    float linearAttenuation = lights[lightIndex].linearAttenuation;
+    float squareAttenuation = lights[lightIndex].squareAttenuation;
+    vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
     lightsColor += vec4(lightValue, 0.0);
   }
 
@@ -53,13 +55,15 @@
     vec3 lightPosition = lights[lightIndex].position;
     vec3 coneDirection = lights[lightIndex].direction;
     float coneAngle = lights[lightIndex].coneAngle;
+    float linearAttenuation = lights[lightIndex].linearAttenuation;
+    float squareAttenuation = lights[lightIndex].squareAttenuation;
 
     vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
     float distanceToLight = length(lightDir);
     lightDir /= distanceToLight; // normalize
     float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
     if (lightToSurfaceAngle < coneAngle) {
-      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, lights[lightIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
       lightsColor += vec4(lightValue, 0.0);
     }
   }
@@ -82,18 +86,15 @@
       vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy) * projectors[projectorIndex].color;
 
       vec3 lightPosition = projectors[projectorIndex].position;
-      // vec3 coneDirection = lights[lightIndex].direction;
-      // float coneAngle = lights[lightIndex].coneAngle;
+      float linearAttenuation = projectors[projectorIndex].linearAttenuation;
+      float squareAttenuation = projectors[projectorIndex].squareAttenuation;
 
       vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
       float distanceToLight = length(lightDir);
       lightDir /= distanceToLight; // normalize
       vec3 lightColor = projectedTexture.rgb * projectedTexture.a;
-      // float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
-      // if (lightToSurfaceAngle < coneAngle) {
-      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, projectors[projectorIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lightColor, materialSpecular);
+      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lightColor, materialSpecular);
       lightsColor += vec4(lightValue, 0.0);
-      // }
     }
   }
 
@@ -135,8 +136,9 @@ uniform highp sampler2D uProjectorTexture;
 
 struct Light {
   vec3 position;
-  float attenuation;
+  float squareAttenuation;
   vec3 color;
+  float linearAttenuation;
   vec3 direction;
   float coneAngle;
 };
@@ -147,11 +149,12 @@ layout (std140) uniform LightBlock {
 
 struct Projector {
   vec3 position;
-  float attenuation;
+  float squareAttenuation;
   vec4 color;
   vec2 scale;
   vec2 offset;
   mat4 projectionMatrix;
+  float linearAttenuation;
 };
 
 layout (std140) uniform ProjectorBlock {
@@ -159,11 +162,11 @@ layout (std140) uniform ProjectorBlock {
 };
 
 in vec3 vNormal_worldspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.03;
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.0;
 
-vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
+vec3 calculateFragmentDiffuse(float distanceToLight, float linearAttenuation, float squareAttenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
-  float attenuationValue = 1.0 / (1.0 + attenuation * pow(distanceToLight, 2.0));
+  float attenuationValue = 1.0 / (1.0 + linearAttenuation * distanceToLight + squareAttenuation * distanceToLight * distanceToLight);
   vec3 diffuse = lightColor * lightValue;
 
   // TODO: conditionnaly skip specular
