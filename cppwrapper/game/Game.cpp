@@ -30,7 +30,7 @@ SpriteSheetPtr spritesheet;
 LightObjectPtr light;
 LightObjectPtr light2;
 GameObjectPtr lightRing1;
-LightObjectPtr flashLight;
+ProjectorPtr flashLight;
 MaterialTextureProjectionPtr materialTexProj;
 //ProjectorPtr projector;
 
@@ -50,7 +50,7 @@ void Game::init(Engine *engine) {
   camXAngle = -M_PI / 8;
 
   spritesheet = loader::loadSpritesheet("resources/common/decals.json");
-  auto projectorTexture = loader::loadTexture("resources/common/decal.png");
+  auto projectorTexture = loader::loadTexture("resources/common/flashlight.jpg");
   engine->renderer()->projectorTexture(projectorTexture);
 
 //  materialTexProj = std::make_shared<MaterialTextureProjection>();
@@ -69,7 +69,7 @@ void Game::init(Engine *engine) {
   terrain->addTextures("resources/terrain/snow2_d.jpg", "resources/terrain/snow2_n.jpg");
   terrain->addTextures("resources/terrain/snow_mntn2_d.jpg", "resources/terrain/snow_mntn2_n.jpg");
   terrain->loadSplatmap("resources/terrain/splatmap.png");
-//  terrain->loadSpecularmap("resources/terrain/specular.jpg");
+  terrain->loadSpecularmap("resources/terrain/specular.jpg");
   terrain->transform()->position(vec3(-15, 0,-15));
 
   bundle = Resources::loadModel("resources/models/group.mdl");
@@ -79,11 +79,11 @@ void Game::init(Engine *engine) {
   rootObj = loader::loadHierarchy(bundle, nullptr, nullptr);
   rootObj->transform()->position(vec3(0, 3, 0));
 
-  light = CreateGameObject<LightObject>();
-  light->transform()->position(vec3(0, 4, 0));
-  light->radius(15);
-  light->color(vec3(1, 1, 1));
-  light->enableDebug();
+//  light = CreateGameObject<LightObject>();
+//  light->transform()->position(vec3(0, 4, 0));
+//  light->radius(15);
+//  light->color(vec3(1, 1, 1));
+//  light->enableDebug();
 
 //  light2 = CreateGameObject<LightObject>();
 //  light2->transform()->position(vec3(0, 4, 0));
@@ -94,8 +94,8 @@ void Game::init(Engine *engine) {
   lightRing1 = CreateGameObject<GameObject>();
   lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
   lightRing1->transform()->position(vec3(1.2, 3, 1));
-  int ringCount = 8;
-//  int ringCount = 0;
+//  int ringCount = 8;
+  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
 //    if (i % 2 != 0) continue;
 
@@ -113,11 +113,14 @@ void Game::init(Engine *engine) {
     lightInRing->transform()->parent(lightRing1->transform());
   }
 
-  flashLight = CreateGameObject<LightObject>();
+  flashLight = CreateGameObject<Projector>();
   flashLight->transform()->parent(camera->transform());
-  flashLight->type(LightObjectType::Spot);
-  flashLight->coneAngle(50);
-  flashLight->radius(13);
+  flashLight->type(ProjectorType::Projection);
+//  flashLight->coneAngle(50);
+  flashLight->zFar(20);
+  flashLight->zNear(0.05);
+  flashLight->adjustAttenuation();
+  flashLight->fov(50);
   flashLight->transform()->position(vec3(0,0,-0.1));
 //  flashLight->enableDebug();
 
@@ -234,8 +237,8 @@ void Game::_updateGameLogic(float dt) {
 //  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
 //  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);
 
-//  auto debugDraw = getEngine()->debugDraw();
-//  debugDraw->drawFrustum(projMatrix, glm::vec4(1, 1, 0, 1));
+  auto debugDraw = getEngine()->debugDraw();
+  debugDraw->drawFrustum(projMatrix, glm::vec4(1, 1, 0, 1));
 
 //  OBB obb(vec3(10, 0, 5), vec3(6, 3, 1));
 //  debugDraw->drawOBB(obb, vec4(1, 0, 1, 1));

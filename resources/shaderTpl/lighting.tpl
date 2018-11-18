@@ -79,8 +79,41 @@
     if (projectedTextureUV.x >= 0.0 && projectedTextureUV.x < 1.0
         && projectedTextureUV.y >= 0.0 && projectedTextureUV.y < 1.0
         && projectedTextureUV.z >= 0.0 && projectedTextureUV.z < 1.0) {
-      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy);
-      fragmentColor *= projectedTexture;
+      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy) * projectors[projectorIndex].color;
+
+      vec3 lightPosition = projectors[projectorIndex].position;
+      // vec3 coneDirection = lights[lightIndex].direction;
+      // float coneAngle = lights[lightIndex].coneAngle;
+
+      vec3 lightDir = vPosition_worldspace.xyz - lightPosition;
+      float distanceToLight = length(lightDir);
+      lightDir /= distanceToLight; // normalize
+      vec3 lightColor = projectedTexture.rgb * projectedTexture.a;
+      // float lightToSurfaceAngle = acos(dot(lightDir, coneDirection));
+      // if (lightToSurfaceAngle < coneAngle) {
+      vec3 lightValue = calculateFragmentDiffuse(distanceToLight, projectors[projectorIndex].attenuation, normal_worldspace, lightDir, eyeDir_worldspace, lightColor, materialSpecular);
+      lightsColor += vec4(lightValue, 0.0);
+      // }
+    }
+  }
+
+  // Decals
+  for (uint i = 0u; i < decalCount; i++) {
+    uint currentOffset = lightOffset + i + pointLightCount + spotLightCount + projectorCount;
+    {% if USE_BUFFER_TEXTURE %}
+        uint projectorIndex = texelFetch(uLightIndices, int(currentOffset)).r;
+    {% else %}
+        uint projectorIndex = texelFetch(uLightIndices, ivec2(currentOffset % 4096u, int(floor(float(currentOffset) / 4096.0))), 0).r;
+    {% endif %}
+
+    vec4 projectedTextureUV = projectors[projectorIndex].projectionMatrix * vPosition_worldspace;
+    projectedTextureUV /= projectedTextureUV.w;
+    projectedTextureUV = (projectedTextureUV + 1.0) / 2.0;
+    if (projectedTextureUV.x >= 0.0 && projectedTextureUV.x < 1.0
+        && projectedTextureUV.y >= 0.0 && projectedTextureUV.y < 1.0
+        && projectedTextureUV.z >= 0.0 && projectedTextureUV.z < 1.0) {
+      vec4 projectedTexture = texture(uProjectorTexture, projectedTextureUV.xy) * projectors[projectorIndex].color;
+      fragmentColor = vec4(mix(fragmentColor.rgb, projectedTexture.rgb, projectedTexture.a), fragmentColor.a);
     }
   }
 
@@ -126,13 +159,14 @@ layout (std140) uniform ProjectorBlock {
 };
 
 in vec3 vNormal_worldspace;
-vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.3;
+vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.03;
 
 vec3 calculateFragmentDiffuse(float distanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
   float attenuationValue = 1.0 / (1.0 + attenuation * pow(distanceToLight, 2.0));
   vec3 diffuse = lightColor * lightValue;
 
+  // TODO: conditionnaly skip specular
   vec3 reflect = reflect(lightDir, normal);
   float cosAlpha = clamp(dot(eyeDir, reflect), 0.0, 1.0);
   vec3 specular = pow(cosAlpha, 32.0) * lightColor * materialSpecular;
