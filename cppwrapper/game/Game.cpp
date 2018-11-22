@@ -43,8 +43,9 @@ mat4 projMatrix;
 double drawTime = 0;
 int decalIndex = 0;
 
-void Game::init(Engine *engine) {
+void Game::init(std::shared_ptr<Engine> engine) {
   _engine = engine;
+  _scene = std::make_shared<Scene>();
 
   camera = CreateGameObject<Camera>();
   camera->transform()->position(vec3(0, 5, 15));
@@ -52,7 +53,7 @@ void Game::init(Engine *engine) {
 
   spritesheet = loader::loadSpritesheet("resources/common/decals.json");
   auto projectorTexture = loader::loadTexture("resources/common/" + spritesheet->spritesheetName(), true);
-  engine->renderer()->projectorTexture(projectorTexture);
+  engine->projectorTexture(projectorTexture);
 
 //  materialTexProj = std::make_shared<MaterialTextureProjection>();
 //  materialTexProj->projectedTexture(projectorTexture );
@@ -152,7 +153,7 @@ void Game::update(float dt) {
   _updateInput(dt);
   _updateGameLogic(dt);
 
-  _scene.update(dt);
+  _scene->update(dt);
   _engine->renderScene(_scene);
 }
 
@@ -213,11 +214,6 @@ void Game::_updateInput(float dt) {
     proj->spriteBounds(spritesheet->getSpriteData(decalName).bounds);
     proj->transform()->position(camera->transform()->position());
     proj->transform()->rotation(camera->transform()->rotation());
-  }
-
-  if (input->keyDown(Key::MouseLeft)) {
-    camXAngle -= input->mouseDelta().y * 0.008;
-    camYAngle -= input->mouseDelta().x * 0.008;
   }
 
   if (input->keyDown(Key::MouseLeft)) {

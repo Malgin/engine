@@ -5,17 +5,18 @@
 #ifndef CPPWRAPPER_GAME_H
 #define CPPWRAPPER_GAME_H
 
-#include "engine/EngineMain.h"
+#include "EngineMain.h"
+#include <memory>
 
 class Game: public IGame {
 
 public:
-  void init(Engine *engine) override;
+  void init(std::shared_ptr<Engine> engine) override;
   void update(float dt) override;
 
 private:
-  Engine *_engine = nullptr;
-  Scene _scene;
+  std::shared_ptr<Engine> _engine = nullptr;
+  std::shared_ptr<Scene> _scene;
 
 private:
   void _updateGameLogic(float dt);
