@@ -16,6 +16,7 @@
 #include "objects/Camera.h"
 #include "objects/LightObject.h"
 #include "render/renderer/Renderer.h"
+#include "utils/Performance.h"
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
@@ -185,6 +186,9 @@ void Game::_updateInput(float dt) {
     posDelta += camera->transform()->down();
   }
 
+  if (input->keyDown(Key::Equal)) {
+    engine::Performance::printAverages();
+  }
 
   if (input->keyDown(Key::Space)) {
 //    projector->transform()->position(camera->transform()->position());
