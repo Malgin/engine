@@ -17,12 +17,17 @@ in vec2 vTexCoord0;
 out vec4 fragmentColor;
 
 uniform highp sampler2D uTexture0;
+uniform float uZNear;
+uniform float uZFar;
+
+float LinearizeDepth(float depth)
+{
+  float z = depth * 2.0 - 1.0; // Back to NDC
+  return (2.0 * uZNear * uZFar) / (uZFar + uZNear - z * (uZFar - uZNear));
+}
 
 void main()
 {
-  vec4 texture = texture(uTexture0, vTexCoord0);
-  // float average = 0.2126 * texture.r + 0.7152 * texture.g + 0.0722 * texture.b;
-  // fragmentColor = vec4(average, average, average, 1.0);
-  // fragmentColor = vec4(vec3(1,1,1) - texture.rgb, 1.0);
-  fragmentColor = vec4(texture.rgb, 1.0);
+  float depthValue = texture(uTexture0, vTexCoord0).r;
+  fragmentColor = vec4(vec3(depthValue), 1.0);
 }

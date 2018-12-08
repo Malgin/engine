@@ -17,17 +17,22 @@
 #include "objects/LightObject.h"
 #include "render/renderer/Renderer.h"
 #include "utils/Performance.h"
+#include "render/renderer/SceneRenderer.h"
+
+TexturePtr texture1;
 
 GameObjectPtr rootObj;
 std::shared_ptr<Sprite> sprite1;
 std::shared_ptr<Sprite> sprite2;
 std::shared_ptr<Sprite> sprite3;
 CameraPtr camera;
+CameraPtr camera2D;
 
 TerrainPtr terrain;
 
 SpriteSheetPtr spritesheet;
 
+LightObjectPtr spotLight;
 LightObjectPtr light;
 LightObjectPtr light2;
 GameObjectPtr lightRing1;
@@ -48,8 +53,11 @@ void Game::init(std::shared_ptr<Engine> engine) {
   _engine = engine;
   _scene = std::make_shared<Scene>();
 
+  camera2D = CreateGameObject<Camera>();
+  camera2D->mode(Camera::Mode::UI);
   camera = CreateGameObject<Camera>();
   camera->transform()->position(vec3(0, 5, 15));
+//  camera2D->transform()->position(vec3(0, 5, 0));
   camXAngle = -M_PI / 8;
 
   spritesheet = loader::loadSpritesheet("resources/common/decals.json");
@@ -60,7 +68,7 @@ void Game::init(std::shared_ptr<Engine> engine) {
 //  materialTexProj->projectedTexture(projectorTexture );
 
 //  projector = CreateGameObject<Projector>();
-//  projector->type(ProjectorType::Projection);
+//  projector->type(ProjectorType::Projector);
 //  projector->setDebugEnabled(true);
 //  projector->zFar(3);
 
@@ -86,7 +94,9 @@ void Game::init(std::shared_ptr<Engine> engine) {
 //  light->transform()->position(vec3(0, 4, 0));
 //  light->attenuation(0.0, 0.9);
 //  light->color(vec3(1, 1, 1));
-//  light->enableDebug();
+//  light->type(LightObjectType::Spot);
+//  light->coneAngle(30);
+//  light->castShadows(true);
 
 //  light2 = CreateGameObject<LightObject>();
 //  light2->transform()->position(vec3(0, 4, 0));
@@ -97,7 +107,7 @@ void Game::init(std::shared_ptr<Engine> engine) {
   lightRing1 = CreateGameObject<GameObject>();
   lightRing1->transform()->rotation(glm::angleAxis((float)M_PI / 2, vec3(0, 1, 0)));
   lightRing1->transform()->position(vec3(1.2, 3, 1));
-  int ringCount = 8;
+  int ringCount = 0;
 //  int ringCount = 0;
   for (int i = 0; i < ringCount; i++) {
 //    if (i % 2 != 0) continue;
@@ -106,6 +116,7 @@ void Game::init(std::shared_ptr<Engine> engine) {
     float ang = M_PI * 2 * i / ringCount;
     lightInRing->transform()->position(vec3(cosf(ang) * 7, 0, sinf(ang) * 7));
     lightInRing->type(i % 2 == 0 ? LightObjectType::Point : LightObjectType::Spot);
+
     lightInRing->coneAngle(30);
     lightInRing->transform()->rotate(vec3(1, 0, 0), -M_PI / 4.0f);
 //    lightInRing->radius(7);
@@ -117,16 +128,29 @@ void Game::init(std::shared_ptr<Engine> engine) {
   }
 
   flashLight = CreateGameObject<Projector>();
-  flashLight->transform()->parent(camera->transform());
-  flashLight->type(ProjectorType::Projection);
+//  flashLight->transform()->parent(camera->transform());
+  flashLight->type(ProjectorType::Projector);
   flashLight->zFar(40);
   flashLight->zNear(0.05);
-  flashLight->attenuation(0.0, 0.1);
+  flashLight->attenuation(0.0, 0.01);
   flashLight->fov(50);
-  flashLight->transform()->position(vec3(0,0,-0.1));
+  flashLight->castShadows(true);
+//  flashLight->transform()->position(vec3(0,0,-0.1));
   flashLight->spriteBounds(spritesheet->getSpriteData("flashlight").bounds);
 
-  auto texture1 = loader::loadTexture("resources/lama.jpg");
+  spotLight = CreateGameObject<LightObject>();
+  spotLight->type(LightObjectType::Spot);
+
+  spotLight->coneAngle(50);
+  spotLight->transform()->rotate(vec3(1, 0, 0), -M_PI / 2.0f);
+  spotLight->transform()->position(vec3(0, 20, 0));
+  spotLight->color(vec3(1,1,1));
+  spotLight->radius(40);
+  spotLight->attenuation(0, 0.01);
+  spotLight->castShadows(true);
+//  spotLight->enableDebug();
+
+  texture1 = loader::loadTexture("resources/lama.jpg");
   auto materialTexture1 = std::make_shared<MaterialTexture>();
   materialTexture1->texture(texture1);
   sprite1 = CreateGameObject<Sprite>();
@@ -155,7 +179,7 @@ void Game::update(float dt) {
   _updateGameLogic(dt);
 
   _scene->update(dt);
-  _engine->renderScene(_scene);
+  _engine->renderScene(_scene, camera, camera2D);
 }
 
 void Game::_updateInput(float dt) {
@@ -191,18 +215,8 @@ void Game::_updateInput(float dt) {
   }
 
   if (input->keyDown(Key::Space)) {
-//    projector->transform()->position(camera->transform()->position());
-//    projector->transform()->rotation(camera->transform()->rotation());
-
-//    projMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 2.0f);
-//    projMatrix = glm::perspective(RAD(30), 1.0f, 1.0f, 4.0f);
-//    projMatrix *= camera->viewMatrix();
-      projMatrix = camera->viewProjectionMatrix();
-//
-//    materialTexProj->projectedTextureMatrix(projMatrix);
-
-//    light->transform()->position(camera->transform()->position() + camera->transform()->forward() * 2.5f);
-//    rootObj->transform()->rotate(vec3(0, 0, 1), dt * PI);
+    flashLight->transform()->position(camera->transform()->position());
+    flashLight->transform()->rotation(camera->transform()->rotation());
   }
 
   if (input->keyDown(Key::C) && getEngine()->time() - drawTime > 0.3) {
@@ -232,12 +246,21 @@ void Game::_updateGameLogic(float dt) {
 //  dt *= 0.05;
   ang += dt * PI;
 
+//  _engine->debugDraw()->drawImage(texture1, vec4(150, 150, 300, 300));
+
+  auto depthTexture = getEngine()->sceneRenderer()->shadowMapDepthTexture();
+  if (depthTexture) {
+    _engine->debugDraw()->drawDepthImage(depthTexture, vec4(-600, -400, 300, 300), vec2(0.05f, 40.0f));
+  }
+
   quat rotation(vec3(camXAngle, camYAngle, 0));
   camera->transform()->rotation(rotation);
 
   sprite3->materialColor()->color(vec4((sin(ang) + 1) / 2, (cos(ang) + 1) / 2, cos(ang * 0.5) + sin(ang * 0.2), 1));
   sprite1->transform()->rotate(vec3(0, 0, 1), dt * PI);
   sprite2->transform()->rotate(vec3(0, 0, 1), dt * PI * 2);
+
+  rootObj->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.3);
 
 //  light->transform()->setPosition(vec3(cos(ang) * 9, 3, sin(ang) * 9));
 //  lightRing1->transform()->rotate(vec3(0, 1, 0), dt * PI * 0.2);

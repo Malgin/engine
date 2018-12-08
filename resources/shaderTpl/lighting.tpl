@@ -41,6 +41,7 @@
     float linearAttenuation = lights[lightIndex].linearAttenuation;
     float squareAttenuation = lights[lightIndex].squareAttenuation;
     vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+
     lightsColor += vec4(lightValue, 0.0);
   }
 
@@ -68,6 +69,16 @@
     if (lightToSurfaceAngle > coneAngle) {
       vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
       float intensity = clamp((lightToSurfaceAngle - coneAngle) / epsilon, 0.0, 1.0);
+
+      if (lights[lightIndex].shadowmapScale.x > 0) {
+        vec4 position_lightspace = lights[lightIndex].projectionMatrix * vPosition_worldspace;
+        vec4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
+        position_lightspace_normalized = (position_lightspace_normalized + 1.0) / 2.0;
+        vec2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
+        float shadow = calculateFragmentShadow(shadowmapUV, position_lightspace_normalized.z);
+        lightValue *= 1.0 - shadow;
+      }
+
       lightsColor += vec4(lightValue * intensity, 0.0);
     }
   }
@@ -99,6 +110,16 @@
       lightDir /= distanceToLight; // normalize
       vec3 lightColor = projectedTexture.rgb * projectedTexture.a;
       vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lightColor, materialSpecular);
+
+      // closestDepth = LinearizeDepth(closestDepth);
+      // fragmentColor = vec4(closestDepth, closestDepth, closestDepth, 1);// vec4((2.0 * 0.05 * 40) / (40 + 0.05 - z * (40 - 0.05)) / 40);
+      // lightColor = vec3(1.0);
+      if (projectors[projectorIndex].shadowmapScale.x > 0) {
+        vec2 shadowmapUV = projectedTextureUV.xy * projectors[projectorIndex].shadowmapScale + projectors[projectorIndex].shadowmapOffset;
+        float shadow = calculateFragmentShadow(shadowmapUV, projectedTextureUV.z);
+        lightValue *= 1.0 - shadow;
+      }
+
       lightsColor += vec4(lightValue, 0.0);
     }
   }
@@ -139,6 +160,7 @@ uniform highp usampler2D uLightIndices;
 {% endif %}
 
 uniform highp sampler2D uProjectorTexture;
+uniform highp sampler2D uShadowMap;
 
 struct Light {
   vec3 position;
@@ -147,6 +169,9 @@ struct Light {
   float linearAttenuation;
   vec3 direction;
   float coneAngle;
+  mat4 projectionMatrix;
+  vec2 shadowmapScale;
+  vec2 shadowmapOffset;
 };
 
 layout (std140) uniform LightBlock {
@@ -159,6 +184,8 @@ struct Projector {
   vec4 color;
   vec2 scale;
   vec2 offset;
+  vec2 shadowmapScale;
+  vec2 shadowmapOffset;
   mat4 projectionMatrix;
   float linearAttenuation;
 };
@@ -169,6 +196,26 @@ layout (std140) uniform ProjectorBlock {
 
 in vec3 vNormal_worldspace;
 vec4 ambient = vec4(0.1, 0.1, 0.1, 0.0) * 0.0;
+
+float LinearizeDepth(float depth) {
+  vec2 uNearFar = vec2(0.05, 40.0);
+  float z = depth * 2.0 - 1.0; // Back to NDC
+  return (2.0 * uNearFar.x * uNearFar.y) / (uNearFar.y + uNearFar.x - z * (uNearFar.y - uNearFar.x)) / uNearFar.y;
+}
+
+float calculateFragmentShadow(vec2 uv, float fragmentDepth) {
+  float shadow = 0.0;
+  vec2 texelSize = 1.0 / textureSize(uShadowMap, 0);
+  for(int x = -1; x <= 1; x++) {
+    for(int y = -1; y <= 1; y++) {
+      float closestDepth = texture(uShadowMap, uv + vec2(x, y) * texelSize).r;
+      shadow += fragmentDepth > closestDepth ? 1.0 : 0.0;
+    }
+  }
+
+  shadow /= 9.0;
+  return shadow;
+}
 
 vec3 calculateFragmentDiffuse(float distanceToLight, float linearAttenuation, float squareAttenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
