@@ -7,8 +7,8 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd ${DIR}
-rm -rf build_js
-mkdir -p build_js
+#  rm -rf build_js
+#  mkdir -p build_js
 cd build_js
 
 if ! type "emcmake" > /dev/null; then

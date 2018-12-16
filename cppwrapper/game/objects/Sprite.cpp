@@ -5,17 +5,6 @@
 #include "Sprite.h"
 
 
-Material createMaterial() {
-//  ShaderCapsSetPtr caps(new ShaderCapsSet());
-//  auto engine = getEngine();
-//
-//  auto shader = _renderer->getShaderWithCaps(caps).get();
-//  shader->addUniform(UniformName::ProjectionMatrix);
-//  shader->addUniform(UniformName::ModelViewMatrix);
-//  shader->addUniform(UniformName::Texture0);
-
-}
-
 Sprite::Sprite() : MeshObject() {
   GLushort indices[] = {0, 1, 2, 0, 2, 3};
   float vertices[] = {    -1.0f, -1.0f, 0.0f,

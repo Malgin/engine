@@ -53,13 +53,13 @@ export default class Application {
     let width = (window.innerWidth || doc.clientWidth);
     let height = (window.innerHeight || doc.clientHeight);
 
-    if (width !== this.width || height !== this.height) {
-      this.width = width;
-      this.height = height;
+    // if (width !== this.width || height !== this.height) {
+    //   this.width = width;
+    //   this.height = height;
 
-      this.canvas.width = width;
-      this.canvas.height = height;
-    }
+    //   this.canvas.width = width;
+    //   this.canvas.height = height;
+    // }
   }
 
   setupWebGL () {
@@ -86,27 +86,7 @@ export default class Application {
   }
 
   onAnimationFrame () {
-    let gl = this.gl;
-
-    let now = Date.now() / 1000; // seconds
-    let lastTime = this.time || now;
-    let dt = now - lastTime;
-
-    this.time = now;
-
-    this.input.update();
-
-    gl.viewport(0, 0, this.width, this.height);
-    this.scene.update(dt);
-    this.render(dt, gl);
-    this.renderer.render();
-
-    // Debug render
-    if (this.debugDraw) {
-      this.debugDraw.render();
-    }
-
-    window.requestAnimationFrame(this.renderFunc);
+    // window.requestAnimationFrame(this.renderFunc);
   }
 
   setupDebugDraw (shader) {
