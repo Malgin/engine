@@ -29,6 +29,19 @@ in vec3 aNormal;
 out vec3 vNormal_worldspace;
 {% endif %}
 
+{% if SKINNING %}
+in vec3 aJointWeights;
+in vec3 aJointIndices;
+
+struct SkinningMatrices {
+  mat4 matrices[60];
+};
+
+layout (std140) uniform SkinningMatricesBlock {
+  SkinningMatrices skinningMatrices;
+};
+{% endif %}
+
 {% if NORMAL_MAP %}
 in vec3 aTangent;
 out vec3 vTangent_worldspace;
@@ -50,15 +63,26 @@ void main(void) {
 
 {% if VERTEX_COLOR %}{{ vertexColor("VERTEX_MAIN") }}{% endif %}
 
-  vPosition_worldspace = transform.model * vec4(aPosition, 1.0);
+  {% if SKINNING %}
+  mat4 modelMatrix = mat4(0);
+  for (int i = 0; i < 3; i++) {
+    int jointIndex = int(aJointIndices[i]);
+    float jointWeight = aJointWeights[i];
+    modelMatrix += skinningMatrices.matrices[jointIndex] * jointWeight;
+  }
+  {% else %}
+  mat4 modelMatrix = transform.model;
+  {% endif %}
+
+  vPosition_worldspace = modelMatrix * vec4(aPosition, 1.0);
   vec4 position_cameraspace = camera.viewMatrix * vPosition_worldspace;
 
 {% if LIGHTING %}
-  vNormal_worldspace = normalize(transform.model * vec4(aNormal, 0)).xyz;
+  vNormal_worldspace = normalize(modelMatrix * vec4(aNormal, 0)).xyz;
 {% endif %}
 {% if NORMAL_MAP %}
-  vTangent_worldspace = normalize(transform.model * vec4(aTangent, 0)).xyz;
-  vBitangent_worldspace = normalize(transform.model * vec4(aBitangent, 0)).xyz;
+  vTangent_worldspace = normalize(modelMatrix * vec4(aTangent, 0)).xyz;
+  vBitangent_worldspace = normalize(modelMatrix * vec4(aBitangent, 0)).xyz;
 {% endif %}
 
   gl_Position = camera.projectionMatrix * position_cameraspace;

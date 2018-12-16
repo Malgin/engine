@@ -22,6 +22,8 @@
 TexturePtr texture1;
 
 GameObjectPtr rootObj;
+GameObjectPtr rootObj2;
+
 std::shared_ptr<Sprite> sprite1;
 std::shared_ptr<Sprite> sprite2;
 std::shared_ptr<Sprite> sprite3;
@@ -92,6 +94,12 @@ void Game::init(std::shared_ptr<Engine> engine) {
   rootObj = loader::loadSkinnedMesh(bundle);
   rootObj->transform()->position(vec3(0, 1, 0));
   rootObj->transform()->scale(vec3(0.01, 0.01, 0.01));
+
+  loader::MaterialPicker texProjPicker2(std::make_shared<MaterialLighting>());
+//  rootObj2 = loader::loadHierarchy(bundle, nullptr, &texProjPicker2);
+  rootObj2 = loader::loadSkinnedMesh(bundle);
+  rootObj2->transform()->position(vec3(2, 1, 0));
+  rootObj2->transform()->scale(vec3(0.01, 0.01, 0.01));
 
 //  light = CreateGameObject<LightObject>();
 //  light->transform()->position(vec3(0, 4, 0));
