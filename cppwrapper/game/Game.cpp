@@ -83,12 +83,15 @@ void Game::init(std::shared_ptr<Engine> engine) {
   terrain->loadSpecularmap("resources/terrain/specular.jpg");
   terrain->transform()->position(vec3(-15, 0,-15));
 
-  bundle = Resources::loadModel("resources/models/group.mdl");
+  bundle = Resources::loadModel("resources/models/girl.mdl");
+//  bundle = Resources::loadModel("resources/models/skin_cilynder.mdl");
+
 //  loader::MaterialPicker texProjPicker(materialTexProj);
   loader::MaterialPicker texProjPicker(std::make_shared<MaterialLighting>());
 //  rootObj = loader::loadHierarchy(bundle, nullptr, &texProjPicker);
-  rootObj = loader::loadHierarchy(bundle, nullptr, nullptr);
-  rootObj->transform()->position(vec3(0, 3, 0));
+  rootObj = loader::loadSkinnedMesh(bundle);
+  rootObj->transform()->position(vec3(0, 1, 0));
+  rootObj->transform()->scale(vec3(0.01, 0.01, 0.01));
 
 //  light = CreateGameObject<LightObject>();
 //  light->transform()->position(vec3(0, 4, 0));
@@ -139,14 +142,14 @@ void Game::init(std::shared_ptr<Engine> engine) {
   flashLight->spriteBounds(spritesheet->getSpriteData("flashlight").bounds);
 
   spotLight = CreateGameObject<LightObject>();
-  spotLight->type(LightObjectType::Spot);
+  spotLight->type(LightObjectType::Point);
 
-  spotLight->coneAngle(50);
+  spotLight->coneAngle(10);
   spotLight->transform()->rotate(vec3(1, 0, 0), -M_PI / 2.0f);
   spotLight->transform()->position(vec3(0, 20, 0));
   spotLight->color(vec3(1,1,1));
   spotLight->radius(40);
-  spotLight->attenuation(0, 0.01);
+  spotLight->attenuation(0.07, 0.05);
   spotLight->castShadows(true);
 //  spotLight->enableDebug();
 

@@ -42,6 +42,21 @@
     float squareAttenuation = lights[lightIndex].squareAttenuation;
     vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
 
+    vec3 coneDirection = lights[lightIndex].direction;
+    float coneAngle = lights[lightIndex].coneAngle;
+    float lightToSurfaceAngle = dot(lightDir, coneDirection);
+    float innerLightToSurfaceAngle = lightToSurfaceAngle * 1.03;
+    float epsilon = innerLightToSurfaceAngle - lightToSurfaceAngle;
+
+    if (lightToSurfaceAngle > coneAngle && lights[lightIndex].shadowmapScale.x > 0) {
+      vec4 position_lightspace = lights[lightIndex].projectionMatrix * vPosition_worldspace;
+      vec4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
+      position_lightspace_normalized = (position_lightspace_normalized + 1.0) / 2.0;
+      vec2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
+      float shadow = calculateFragmentShadow(shadowmapUV, position_lightspace_normalized.z);
+      lightValue *= 1.0 - shadow;
+    }
+
     lightsColor += vec4(lightValue, 0.0);
   }
 
@@ -111,9 +126,6 @@
       vec3 lightColor = projectedTexture.rgb * projectedTexture.a;
       vec3 lightValue = calculateFragmentDiffuse(distanceToLight, linearAttenuation, squareAttenuation, normal_worldspace, lightDir, eyeDir_worldspace, lightColor, materialSpecular);
 
-      // closestDepth = LinearizeDepth(closestDepth);
-      // fragmentColor = vec4(closestDepth, closestDepth, closestDepth, 1);// vec4((2.0 * 0.05 * 40) / (40 + 0.05 - z * (40 - 0.05)) / 40);
-      // lightColor = vec3(1.0);
       if (projectors[projectorIndex].shadowmapScale.x > 0) {
         vec2 shadowmapUV = projectedTextureUV.xy * projectors[projectorIndex].shadowmapScale + projectors[projectorIndex].shadowmapOffset;
         float shadow = calculateFragmentShadow(shadowmapUV, projectedTextureUV.z);
